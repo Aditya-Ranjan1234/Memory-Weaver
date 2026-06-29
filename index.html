@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Memory Weaver</title>
+  <meta name="description" content="A mobile-first web app for capturing family memories, timelines, recipes, and future capsules.">
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --panel: rgba(255,250,242,.88);
+      --ink: #1f1a17;
+      --muted: #6d625b;
+      --accent: #8c5e3c;
+      --accent2: #c78b5a;
+      --line: #eadfcd;
+      --shadow: 0 18px 60px rgba(62,40,25,.10);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(140,94,60,.12), transparent 30%),
+        linear-gradient(180deg, #fbf7f1, #f3eadc 65%, #efe4d3);
+    }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 20px; }
+    .hero, .grid { display: grid; gap: 18px; }
+    .hero { grid-template-columns: 1.3fr .9fr; }
+    .grid { grid-template-columns: 1fr 1fr; margin-top: 18px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+    .hero-main { padding: 28px; min-height: 280px; }
+    .hero-side { padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+    .eyebrow { text-transform: uppercase; letter-spacing: .18em; font-size: 12px; color: var(--accent); font-weight: 700; }
+    h1 { font-size: clamp(40px, 7vw, 74px); line-height: .95; margin: 12px 0; letter-spacing: -.05em; }
+    .lead { font-size: 18px; color: var(--muted); max-width: 62ch; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 22px; }
+    .stat { padding: 14px; border-radius: 18px; background: rgba(255,255,255,.55); border: 1px solid var(--line); }
+    .stat strong { display: block; font-size: 24px; }
+    .pillrow, .toolbar, .tagrow { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill {
+      padding: 8px 12px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-size: 13px;
+    }
+    .panel { padding: 20px; }
+    .section-title { display: flex; justify-content: space-between; gap: 12px; align-items: end; margin-bottom: 12px; }
+    h2 { margin: 0; font-size: 24px; }
+    label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 6px; }
+    input, select, textarea {
+      width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line);
+      background: #fff; color: var(--ink); font: inherit;
+    }
+    textarea { min-height: 120px; resize: vertical; }
+    button {
+      cursor: pointer; border: 0; border-radius: 14px; padding: 12px 16px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-weight: 700;
+    }
+    button.secondary { background: #2f4d3b; }
+    button.dark { background: #23495f; }
+    button.warn { background: #7a3b3b; }
+    button.alt { background: #4d3f78; }
+    .list { display: grid; gap: 12px; }
+    .item { padding: 16px; border-radius: 18px; border: 1px solid var(--line); background: rgba(255,255,255,.7); }
+    .itemhead { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .muted { color: var(--muted); }
+    .tiny { font-size: 12px; color: var(--muted); }
+    .tag { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #f4eadc; color: #6d4b2a; }
+    .hero-side .card { padding: 14px; background: #fff; }
+    .note {
+      padding: 14px 16px; border-radius: 18px; background: #fff; border: 1px solid var(--line); color: var(--muted);
+    }
+    @media (max-width: 900px) {
+      .hero, .grid, .stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <div class="card hero-main">
+        <div class="eyebrow">Memory Weaver</div>
+        <h1>Capture a life. Preserve the voice. Build the family archive.</h1>
+        <p class="lead">A mobile-first web app for recording memories, importing stories, organizing timelines, and preparing future memory capsules.</p>
+        <div class="stats" id="stats"></div>
+      </div>
+      <div class="card hero-side">
+        <div>
+          <strong>Core Modes</strong>
+          <div class="pillrow" style="margin-top:10px">
+            <div class="pill">Capture</div>
+            <div class="pill">Timeline</div>
+            <div class="pill">People Graph</div>
+            <div class="pill">Recipe Vault</div>
+            <div class="pill">Capsules</div>
+            <div class="pill">Story Book</div>
+          </div>
+        </div>
+        <div class="note">This Vercel-ready version stores everything in <code>localStorage</code>, so it works without a backend.</div>
+        <div class="card">
+          <div class="tiny">Prompt seed</div>
+          <strong id="prompt"></strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="card panel" style="margin-top:18px;">
+      <div class="section-title">
+        <h2>Actions</h2>
+        <div class="tiny">All buttons are live</div>
+      </div>
+      <div class="toolbar">
+        <button type="button" id="refreshBtn">Refresh dashboard</button>
+        <button type="button" id="exportBtn" class="dark">Download JSON export</button>
+        <button type="button" id="resetBtn" class="warn">Reset to demo data</button>
+        <button type="button" id="addStoryBtn" class="alt">Add sample story</button>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card panel">
+        <div class="section-title">
+          <h2>Capture Memory</h2>
+          <div class="tiny">Text, Reddit, voice placeholders, media links</div>
+        </div>
+        <form id="captureForm">
+          <label>Person</label>
+          <input name="person" value="Grandparent">
+          <label>Source</label>
+          <select name="source">
+            <option value="text">Text</option>
+            <option value="reddit">Reddit URL</option>
+            <option value="whatsapp">WhatsApp forward</option>
+            <option value="voice">Voice recording</option>
+            <option value="photo">Photo</option>
+            <option value="video">Video</option>
+            <option value="instagram">Instagram URL</option>
+            <option value="url">Generic URL</option>
+          </select>
+          <label>Title</label>
+          <input name="title" placeholder="Festival story">
+          <label>Content</label>
+          <textarea name="text" placeholder="Write the memory or summary here..."></textarea>
+          <label>URL</label>
+          <input name="url" placeholder="https://reddit.com/... or media link">
+          <label>Tags, comma separated</label>
+          <input name="tags" placeholder="childhood, food, village">
+          <div class="toolbar" style="margin-top:14px;">
+            <button type="submit">Save memory</button>
+            <button type="button" id="seedBtn" class="secondary">Load demo data</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card panel">
+        <div class="section-title">
+          <h2>Story Tools</h2>
+          <div class="tiny">Life story, capsules, recipes</div>
+        </div>
+        <div class="list" id="tools"></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card panel">
+        <div class="section-title">
+          <h2>Timeline</h2>
+          <div class="tiny">Chronological life events</div>
+        </div>
+        <div class="list" id="timeline"></div>
+      </div>
+      <div class="card panel">
+        <div class="section-title">
+          <h2>Memory Library</h2>
+          <div class="tiny">All captured items</div>
+        </div>
+        <div class="list" id="library"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'memory-weaver-state';
+    const prompts = [
+      "Where did you grow up? Describe your house.",
+      "What did your mother cook for festivals?",
+      "How did your family move from one place to another?",
+      "What song did your parents sing to you?",
+      "What was your first job like?"
+    ];
+
+    const seedItems = [
+      { kind: 'memory', title: 'Childhood home', content: 'I grew up in a house with a mango tree in the courtyard and a tin roof that sang in the rain.', source: 'text', tags: ['childhood', 'place', 'home'], metadata: { prompt: 'Where did you grow up?' } },
+      { kind: 'timeline_event', title: 'Moved to Bengaluru', content: 'Moved from the village to Bengaluru in 1972 to look for work and stay with relatives.', source: 'text', tags: ['migration', 'timeline'], metadata: { year: 1972 } },
+      { kind: 'recipe', title: "Festival sweet", content: 'Take semolina, ghee, sugar, and cardamom. Roast slowly and finish with cashews.', source: 'voice', tags: ['food', 'recipe'], metadata: { occasion: 'festival' } },
+      { kind: 'capsule', title: 'For your wedding day', content: 'Keep your family close and remember that love is built in small daily choices.', source: 'voice', tags: ['future', 'capsule'], metadata: { unlock_date: '2035-01-01' } },
+      { kind: 'memory', title: 'First job', content: 'My first job was in a small shop where I learned to greet everyone by name and count change carefully.', source: 'text', tags: ['work', 'story'] },
+      { kind: 'memory', title: 'Partition story', content: 'When families were split by news and fear, people still shared water, food, and directions with strangers.', source: 'text', tags: ['history', 'wisdom'] },
+      { kind: 'recipe', title: "Grandma's biryani", content: 'Marinate rice and vegetables with yogurt, ginger, garlic, chili, and whole spices; cook slowly with fried onions.', source: 'voice', tags: ['recipe', 'food', 'family'] },
+      { kind: 'memory', title: 'Festival song', content: 'The song about rain on a tin roof was always sung before the lamps were lit.', source: 'voice', tags: ['song', 'dialect', 'music'] },
+      { kind: 'timeline_event', title: 'Marriage', content: 'Married in a ceremony where the whole street helped with cooking, flowers, and seating guests.', source: 'text', tags: ['marriage', 'timeline', 'family'], metadata: { year: 1978 } },
+      { kind: 'memory', title: 'Village market', content: 'The market had one tea stall, two vegetable carts, and everyone knew which coconut vendor told the best stories.', source: 'text', tags: ['village', 'place', 'memory'] }
+    ];
+
+    const demoState = {
+      nextId: seedItems.length + 1,
+      people: [{ name: 'Grandparent', relationship: 'Primary storyteller', language: 'en', place: 'Bengaluru' }],
+      items: seedItems.map((item, index) => ({
+        id: index + 1,
+        person: 'Grandparent',
+        language: 'en',
+        created_at: '2026-06-29T00:00:00.000Z',
+        ...item
+      }))
+    };
+
+    const fmt = s => new Date(s).toLocaleString();
+    const esc = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return structuredClone(demoState);
+        const parsed = JSON.parse(raw);
+        if (!parsed.items) return structuredClone(demoState);
+        return parsed;
+      } catch {
+        return structuredClone(demoState);
+      }
+    }
+
+    function saveState(state) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function resetDemo() {
+      saveState(structuredClone(demoState));
+      render();
+    }
+
+    function addItem(item) {
+      const state = loadState();
+      const nextId = state.nextId || 1;
+      const record = {
+        id: nextId,
+        person: item.person || 'Grandparent',
+        language: item.language || 'en',
+        created_at: new Date().toISOString(),
+        kind: item.kind || 'memory',
+        title: item.title || 'Captured memory',
+        content: item.content || '',
+        source: item.source || 'text',
+        tags: item.tags || [],
+        metadata: item.metadata || {}
+      };
+      state.nextId = nextId + 1;
+      state.items = [record, ...(state.items || [])];
+      saveState(state);
+      return record;
+    }
+
+    function exportJson() {
+      const state = loadState();
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'memory-weaver-export.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function render() {
+      const state = loadState();
+      const items = state.items || [];
+      const timeline = items.filter(i => i.kind === 'timeline_event');
+      const recipes = items.filter(i => i.kind === 'recipe').length;
+      const people = (state.people || []).length;
+
+      document.getElementById('stats').innerHTML = [
+        ['Memories', items.length],
+        ['People', people],
+        ['Recipes', recipes]
+      ].map(([label, value]) => `<div class="stat"><strong>${value}</strong><span class="muted">${label}</span></div>`).join('');
+
+      document.getElementById('tools').innerHTML = `
+        <div class="item"><strong>Life Story Builder</strong><div class="muted">Generate a chaptered family story from captured memories.</div></div>
+        <div class="item"><strong>Talk to Grandma Mode</strong><div class="muted">Ask questions and answer only from stored memories.</div></div>
+        <div class="item"><strong>Memory Capsules</strong><div class="muted">Future messages with unlock dates.</div></div>
+        <div class="item"><strong>Recipe Vault</strong><div class="muted">Convert food memories into structured recipe cards.</div></div>
+        <div class="item"><strong>WhatsApp Ingestion</strong><div class="muted">Paste a forwarded story or media URL and save it as a memory.</div></div>
+      `;
+
+      document.getElementById('timeline').innerHTML = timeline.length
+        ? timeline.map(item => `
+          <div class="item">
+            <div class="itemhead"><strong>${esc(item.title)}</strong><span class="tiny">${fmt(item.created_at)}</span></div>
+            <div class="muted">${esc(item.content)}</div>
+          </div>`).join('')
+        : '<div class="muted">No timeline events yet.</div>';
+
+      document.getElementById('library').innerHTML = items.length
+        ? items.map(item => `
+          <div class="item">
+            <div class="itemhead"><strong>${esc(item.title)}</strong><span class="tiny">${esc(item.kind)}</span></div>
+            <div class="muted">${esc(item.content)}</div>
+            <div class="tagrow">${(item.tags || []).map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
+          </div>`).join('')
+        : '<div class="muted">No memories yet.</div>';
+    }
+
+    document.getElementById('prompt').textContent = prompts[Math.floor(Math.random() * prompts.length)];
+
+    document.getElementById('captureForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const form = new FormData(e.currentTarget);
+      const tags = String(form.get('tags') || '').split(',').map(s => s.trim()).filter(Boolean);
+      addItem({
+        person: form.get('person') || 'Grandparent',
+        source: form.get('source') || 'text',
+        title: form.get('title') || 'Captured memory',
+        content: form.get('text') || form.get('url') || '',
+        tags,
+        metadata: form.get('url') ? { url: form.get('url') } : {}
+      });
+      e.currentTarget.reset();
+      render();
+    });
+
+    document.getElementById('seedBtn').addEventListener('click', resetDemo);
+    document.getElementById('refreshBtn').addEventListener('click', render);
+    document.getElementById('exportBtn').addEventListener('click', exportJson);
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (confirm('Reset to demo data?')) resetDemo();
+    });
+    document.getElementById('addStoryBtn').addEventListener('click', () => {
+      addItem({
+        person: 'Grandparent',
+        source: 'text',
+        kind: 'memory',
+        title: 'New family story',
+        content: 'We sat together after dinner and listened to stories about the village, the first bicycle, and the day the rains came early.',
+        tags: ['family', 'story', 'evening']
+      });
+      render();
+    });
+
+    if (!localStorage.getItem(STORAGE_KEY)) resetDemo();
+    else render();
+  </script>
+</body>
+</html>
