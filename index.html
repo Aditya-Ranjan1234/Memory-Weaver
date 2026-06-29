@@ -41,6 +41,29 @@
     .eyebrow { text-transform: uppercase; letter-spacing: .18em; font-size: 12px; color: var(--accent); font-weight: 700; }
     h1 { font-size: clamp(40px, 7vw, 74px); line-height: .95; margin: 12px 0; letter-spacing: -.05em; }
     .lead { font-size: 18px; color: var(--muted); max-width: 62ch; }
+    .version-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .version-badge::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #3c8c57;
+      box-shadow: 0 0 0 4px rgba(60,140,87,.12);
+    }
     .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 22px; }
     .stat { padding: 14px; border-radius: 18px; background: rgba(255,255,255,.55); border: 1px solid var(--line); }
     .stat strong { display: block; font-size: 24px; }
@@ -245,6 +268,7 @@
         <div class="eyebrow">Memory Weaver</div>
         <h1>Capture a life. Preserve the voice. Build the family archive.</h1>
         <p class="lead">A mobile-first web app for recording memories, importing stories, organizing timelines, and preparing future memory capsules.</p>
+        <div class="version-badge">Live build v3 - multilingual wall + floating composer</div>
         <div class="stats" id="stats"></div>
       </div>
       <div class="card hero-side">
@@ -285,7 +309,7 @@
     <section class="card panel" style="margin-top:18px;">
       <div class="section-title">
         <h2>Stories Wall</h2>
-        <div class="tiny">Multilingual family memories</div>
+        <div class="tiny">Multilingual family memories - live build v3</div>
       </div>
       <p class="section-copy">This section is preloaded so the deployed site never feels empty. It highlights how one memory can carry Hindi, Tamil, Telugu, Kannada, and English together.</p>
       <div class="filterbar" id="tagFilters"></div>
