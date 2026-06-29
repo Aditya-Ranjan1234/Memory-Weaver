@@ -5,15 +5,11 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
 from typing import Any, Literal
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlparse
 from urllib.request import Request, urlopen
 
-
-BASE_DIR = Path(__file__).resolve().parent
-DATA_FILE = BASE_DIR / "memory_weaver_data.json"
 
 MemorySource = Literal["reddit", "instagram", "text", "url", "voice", "photo", "video", "whatsapp"]
 MemoryKind = Literal["memory", "timeline_event", "recipe", "capsule", "person"]
@@ -45,6 +41,8 @@ DEFAULT_STATE = {
         }
     ],
 }
+
+STATE = json.loads(json.dumps(DEFAULT_STATE))
 
 SEED_ITEMS = [
     MemoryItem(
@@ -165,19 +163,12 @@ def now_iso() -> str:
 
 
 def load_state() -> dict[str, Any]:
-    if not DATA_FILE.exists():
-        return json.loads(json.dumps(DEFAULT_STATE))
-    with DATA_FILE.open("r", encoding="utf-8") as fh:
-        state = json.load(fh)
-    state.setdefault("next_id", 1)
-    state.setdefault("items", [])
-    state.setdefault("people", DEFAULT_STATE["people"])
-    return state
+    return json.loads(json.dumps(STATE))
 
 
 def save_state(state: dict[str, Any]) -> None:
-    with DATA_FILE.open("w", encoding="utf-8") as fh:
-        json.dump(state, fh, indent=2, ensure_ascii=False)
+    STATE.clear()
+    STATE.update(json.loads(json.dumps(state)))
 
 
 def seed_state(state: dict[str, Any]) -> dict[str, Any]:
@@ -185,7 +176,6 @@ def seed_state(state: dict[str, Any]) -> dict[str, Any]:
         return state
     state["items"] = [asdict(item) for item in SEED_ITEMS]
     state["next_id"] = len(SEED_ITEMS) + 1
-    save_state(state)
     return state
 
 
