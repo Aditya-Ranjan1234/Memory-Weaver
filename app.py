@@ -5,6 +5,7 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any, Literal
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, urlparse
@@ -43,6 +44,7 @@ DEFAULT_STATE = {
 }
 
 STATE = json.loads(json.dumps(DEFAULT_STATE))
+INDEX_FILE = Path(__file__).resolve().with_name("index.html")
 
 SEED_ITEMS = [
     MemoryItem(
@@ -291,6 +293,8 @@ def normalize_capture(source: str, payload: dict[str, Any], person: str) -> list
 
 
 def html_page() -> str:
+    if INDEX_FILE.exists():
+        return INDEX_FILE.read_text(encoding="utf-8")
     return """<!doctype html>
 <html lang="en">
 <head>
