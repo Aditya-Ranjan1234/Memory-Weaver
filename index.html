@@ -134,6 +134,42 @@
     .note {
       padding: 14px 16px; border-radius: 18px; background: #fff; border: 1px solid var(--line); color: var(--muted);
     }
+    details.actions-accordion {
+      margin-bottom: 18px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255,250,242,.88);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    details.actions-accordion > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 18px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+    }
+    details.actions-accordion > summary::-webkit-details-marker { display: none; }
+    .actions-body {
+      padding: 0 20px 18px;
+      border-top: 1px solid var(--line);
+    }
+    .actions-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .actions-label::after {
+      content: "Tap to open";
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
     .section-copy {
       max-width: 70ch;
       margin: 6px 0 0;
@@ -292,12 +328,12 @@
       </div>
     </section>
 
-    <section class="card panel" style="margin-top:18px;">
-      <div class="section-title">
-        <div class="section-title">
-          <h2>Actions</h2>
-          <div class="tiny">All buttons are live</div>
-        </div>
+    <details class="actions-accordion">
+      <summary>
+        <span class="actions-label">Actions</span>
+        <span class="tiny">Refresh, export, reset, add sample</span>
+      </summary>
+      <div class="actions-body">
         <div class="toolbar">
           <button type="button" id="refreshBtn">Refresh dashboard</button>
           <button type="button" id="exportBtn" class="dark">Download JSON export</button>
@@ -305,7 +341,7 @@
           <button type="button" id="addStoryBtn" class="alt">Add sample story</button>
         </div>
       </div>
-    </section>
+    </details>
 
     <section class="card panel" style="margin-top:18px;">
       <div class="section-title">
@@ -476,7 +512,7 @@
         body: `"If you are reading this many years from now, remember where your family came from.\nSpeak your mother tongue, cook together, visit your grandparents, and never let these stories disappear.\n'Yaadein hi asli virasat hain.'\n'Nenapugalu namma nija sampattu.'\n'Jeevitha katha ni cheruvulo undali.'"`
       }
     ];
-    const baseTags = ["all", "childhood", "place", "home", "migration", "timeline", "food", "recipe", "festival", "future", "capsule", "work", "story", "history", "wisdom", "song", "dialect", "music", "marriage", "family", "city", "rain", "language", "culture"];
+    const baseTags = ["all", "childhood", "place", "home", "migration", "timeline", "food", "recipe", "festival", "future", "capsule", "work", "story", "history", "wisdom", "song", "dialect", "music", "marriage", "family", "city", "rain", "language", "culture", "multilingual", "heritage"];
     let activeTag = "all";
 
     const demoState = {
@@ -490,6 +526,22 @@
         ...item
       }))
     };
+
+    const multilingualSeedItems = storyWall.map((story, index) => ({
+      id: seedItems.length + index + 1,
+      kind: 'memory',
+      title: story.title,
+      content: story.body.replace(/^"|"$/g, '').replace(/\\n/g, '\n'),
+      source: 'text',
+      created_at: '2026-06-29T00:00:00.000Z',
+      person: story.person,
+      language: 'multilingual',
+      tags: ['multilingual', 'family', 'story'],
+      metadata: { languages: story.lang, featured: true }
+    }));
+
+    demoState.items = [...demoState.items, ...multilingualSeedItems];
+    demoState.nextId = demoState.items.length + 1;
 
     const fmt = s => new Date(s).toLocaleString();
     const esc = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -552,14 +604,18 @@
     }
 
     function render() {
-      const state = loadState();
+      let state = loadState();
+      if (!state.items || state.items.length === 0) {
+        state = clone(demoState);
+        saveState(state);
+      }
       const items = state.items || [];
       const timeline = items.filter(i => i.kind === 'timeline_event');
       const recipes = items.filter(i => i.kind === 'recipe').length;
       const people = (state.people || []).length;
       const filteredItems = activeTag === "all"
         ? items
-        : items.filter(item => (item.tags || []).map(tag => String(tag).toLowerCase()).includes(activeTag.toLowerCase()));
+        : items.filter(item => (item.tags || []).some(tag => String(tag).toLowerCase() === activeTag.toLowerCase()));
 
       document.getElementById('stats').innerHTML = [
         ['Memories', items.length],
@@ -672,8 +728,8 @@
       render();
     });
 
-    render();
     if (!localStorage.getItem(STORAGE_KEY)) saveState(clone(demoState));
+    render();
   </script>
 </body>
 </html>
