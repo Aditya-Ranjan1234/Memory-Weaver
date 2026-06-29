@@ -1,33 +1,52 @@
 # Memory Weaver
 
-Memory Weaver is a mobile-first web app for capturing, organizing, and preserving family memories, with a special focus on elder storytelling and future memory capsules.
+Memory Weaver is a mobile-first memory archive that helps families preserve the voice, stories, recipes, and timelines of their elders before those details fade away.
 
-## What This Project Does
+## Pitch
 
-Memory Weaver helps families:
+Every family has stories that live in people, not documents.
+Memory Weaver turns those stories into a living archive that can be captured in minutes, organized automatically, and replayed as a family memory book, timeline, or future message capsule.
 
-- Capture stories as text, media links, Reddit imports, and WhatsApp-style forwards
-- Organize memories into timelines, recipes, and future capsules
-- Build a family archive that can later grow into a chat experience or story book
-- Keep the UX simple enough for a grandchild to guide an elder through it
+## Why It Matters
 
-## Live Features In This MVP
+- Families lose irreplaceable stories when elders pass before their memories are recorded
+- Most tools are built for notes, not for voice, emotion, and cultural context
+- Memory Weaver is designed for low-friction family capture, especially when a grandchild is helping an elder use it
 
-- Responsive homepage dashboard
-- Memory capture form with working submit flow
-- Demo-data loading
-- Dashboard refresh
-- Export to JSON
-- Reset to demo data
-- Timeline section
+## What It Does
+
+- Captures family stories from text, media links, Reddit imports, and WhatsApp-style forwards
+- Organizes memories into timelines, recipes, capsules, and story collections
+- Preserves culturally specific details like dialect, place names, food, and family roles
+- Keeps the experience simple enough to use on a phone during a 30-minute family conversation
+
+## Live Features
+
+- Responsive landing page and dashboard
+- Memory capture form with working save flow
+- Sample memory seed collection
+- Timeline view
 - Memory library
-- Recipe and capsule examples
+- Story tools panel
+- Reset to demo data
+- JSON export for portability
+
+## Example Memory Types
+
+- Childhood home descriptions
+- Migration and city move stories
+- First job stories
+- Marriage memories
+- Family recipes
+- Festival songs
+- Village market scenes
+- Future memory capsules for weddings or milestones
 
 ## Data Model
 
-Each saved item stores:
+Each memory stores:
 
-- `kind` - `memory`, `timeline_event`, `recipe`, `capsule`, or `person`
+- `kind`
 - `title`
 - `content`
 - `source`
@@ -37,34 +56,19 @@ Each saved item stores:
 - `tags`
 - `metadata`
 
-Local storage lives in:
+## Deployment
 
-- [`D:\6th Sem\Build FOr Good\memory_weaver_data.json`](D:/6th%20Sem/Build%20For%20Good/memory_weaver_data.json)
+This repo is currently Vercel-ready as a static web app.
 
-## Core Routes
+Best deployment targets:
 
-- `GET /` - Main UI
-- `GET /health` - Server health check
-- `GET /api/dashboard` - Dashboard data
-- `GET /api/export` - Download full JSON export
-- `POST /api/seed` - Reload demo collection
-- `POST /api/reset` - Reset to the built-in demo collection
-- `POST /api/ingest` - Save a new memory
-
-## Capture Sources
-
-- `text`
-- `reddit`
-- `whatsapp`
-- `voice`
-- `photo`
-- `video`
-- `instagram`
-- `url`
+- Vercel
+- GitHub Pages
+- Netlify
 
 ## Running Locally
 
-Use the existing `venv` and run the app:
+Use the existing `venv` and open the app locally:
 
 ```powershell
 .venv\Scripts\Activate.ps1
@@ -75,13 +79,16 @@ Then open:
 
 - [http://127.0.0.1:8000](http://127.0.0.1:8000)
 
+## Project Structure
+
+- [`index.html`](index.html) - Static deployed web app
+- [`app.py`](app.py) - Legacy local prototype logic
+- [`vercel.json`](vercel.json) - Vercel config
+- [`.gitignore`](.gitignore) - Ignore rules
+
 ## Virtual Environment
 
-The project is designed to run inside the local virtual environment at:
-
-- [`D:\6th Sem\Build FOr Good\.venv`](D:/6th%20Sem/Build%20For%20Good/.venv)
-
-If you ever need to recreate it:
+If you ever need to recreate the local `venv`:
 
 ```powershell
 C:\Users\OMEN\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m venv .venv
@@ -89,23 +96,17 @@ C:\Users\OMEN\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 pip install -r requirements.txt
 ```
 
-## Suggested Next Build Steps
+## Suggested Next Steps
 
-- Add SQLite persistence
-- Add authentication and family roles
-- Add file uploads for audio, photos, and videos
-- Add AI summarization and story generation
-- Add a real chat UI for "Talk to Grandma"
-- Add PDF export for the family story book
+- Add real uploads for audio, photos, and video
+- Add family accounts and permissions
+- Add timeline editing
+- Add PDF book generation
+- Add AI story summaries
+- Add a chat-style “Talk to Grandma” experience
 
-## Notes On Reddit And Instagram
+## Notes
 
-- Reddit ingestion uses public JSON endpoints for posts and comments when available.
-- Instagram Reels are treated as public URL references in this MVP.
-- Anything private, auth-protected, or anti-bot constrained should use official APIs or user-provided exports.
-
-## GitHub Project Info
-
-- Repo name: `memory-weaver`
-- Tags: `memory-archive`, `family-history`, `storybook`, `timeline`, `capture`, `fastapi-alternative`, `offline-first`, `reddit-import`, `web-app`
-- One-line description: `A mobile-first web app for capturing family memories, building timelines, and preserving stories for future generations.`
+- Reddit ingestion and backend routes were part of earlier prototypes
+- The deployed Vercel version is static and runs fully in the browser
+- Memory data is stored locally in the browser for this version
