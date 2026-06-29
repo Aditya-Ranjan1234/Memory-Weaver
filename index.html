@@ -406,7 +406,7 @@
           <h2 style="margin:0;">Add Story</h2>
           <div class="tiny">Open the composer with the floating plus button</div>
         </div>
-        <button type="button" class="icon-btn" id="closeModalBtn" aria-label="Close">×</button>
+        <button type="button" class="icon-btn" id="closeModalBtn" aria-label="Close">&times;</button>
       </div>
       <form id="captureForm">
         <label>Person</label>
@@ -520,7 +520,8 @@
       metadata: { languages: story.lang, featured: true }
     }));
     const baseTags = ["all", "childhood", "place", "home", "migration", "timeline", "food", "recipe", "festival", "future", "capsule", "work", "story", "history", "wisdom", "song", "dialect", "music", "marriage", "family", "city", "rain", "language", "culture", "multilingual", "heritage"];
-    let activeTag = "multilingual";
+    let activeTag = "all";
+    let showAll = false;
 
     const demoState = {
       nextId: seedItems.length + 1,
@@ -611,70 +612,102 @@
       const timeline = items.filter(i => i.kind === 'timeline_event');
       const recipes = items.filter(i => i.kind === 'recipe').length;
       const people = (state.people || []).length;
-      const filteredItems = activeTag === "all"
+      const filteredItemsRaw = activeTag === "all"
         ? items
         : items.filter(item => (item.tags || []).some(tag => String(tag).toLowerCase() === activeTag.toLowerCase()));
+
+      const filteredItems = (activeTag === "all" && !showAll)
+        ? filteredItemsRaw.slice(0, 12)
+        : filteredItemsRaw;
       const statsHost = document.getElementById('stats');
       const toolsHost = document.getElementById('tools');
       const timelineHost = document.getElementById('timeline');
       const libraryHost = document.getElementById('library');
       const storyHost = document.getElementById('storyWall');
       const filterHost = document.getElementById('tagFilters');
-      if (!statsHost || !toolsHost || !timelineHost || !libraryHost || !storyHost || !filterHost) {
-        return;
+
+      if (statsHost) {
+        statsHost.innerHTML = [
+          ['Memories', items.length],
+          ['People', people],
+          ['Recipes', recipes]
+        ].map(([label, value]) => `<div class="stat"><strong>${value}</strong><span class="muted">${label}</span></div>`).join('');
       }
 
-      statsHost.innerHTML = [
-        ['Memories', items.length],
-        ['People', people],
-        ['Recipes', recipes]
-      ].map(([label, value]) => `<div class="stat"><strong>${value}</strong><span class="muted">${label}</span></div>`).join('');
+      if (toolsHost) {
+        toolsHost.innerHTML = `
+          <div class="item"><strong>Life Story Builder</strong><div class="muted">Generate a chaptered family story from captured memories.</div></div>
+          <div class="item"><strong>Talk to Grandma Mode</strong><div class="muted">Ask questions and answer only from stored memories.</div></div>
+          <div class="item"><strong>Memory Capsules</strong><div class="muted">Future messages with unlock dates.</div></div>
+          <div class="item"><strong>Recipe Vault</strong><div class="muted">Convert food memories into structured recipe cards.</div></div>
+          <div class="item"><strong>WhatsApp Ingestion</strong><div class="muted">Paste a forwarded story or media URL and save it as a memory.</div></div>
+        `;
+      }
 
-      toolsHost.innerHTML = `
-        <div class="item"><strong>Life Story Builder</strong><div class="muted">Generate a chaptered family story from captured memories.</div></div>
-        <div class="item"><strong>Talk to Grandma Mode</strong><div class="muted">Ask questions and answer only from stored memories.</div></div>
-        <div class="item"><strong>Memory Capsules</strong><div class="muted">Future messages with unlock dates.</div></div>
-        <div class="item"><strong>Recipe Vault</strong><div class="muted">Convert food memories into structured recipe cards.</div></div>
-        <div class="item"><strong>WhatsApp Ingestion</strong><div class="muted">Paste a forwarded story or media URL and save it as a memory.</div></div>
-      `;
+      if (timelineHost) {
+        timelineHost.innerHTML = timeline.length
+          ? timeline.map(item => `
+            <div class="item">
+              <div class="itemhead"><strong>${esc(item.title)}</strong><span class="tiny">${fmt(item.created_at)}</span></div>
+              <div class="muted">${esc(item.content)}</div>
+            </div>`).join('')
+          : '<div class="muted">No timeline events yet.</div>';
+      }
 
-      timelineHost.innerHTML = timeline.length
-        ? timeline.map(item => `
-          <div class="item">
-            <div class="itemhead"><strong>${esc(item.title)}</strong><span class="tiny">${fmt(item.created_at)}</span></div>
-            <div class="muted">${esc(item.content)}</div>
-          </div>`).join('')
-        : '<div class="muted">No timeline events yet.</div>';
-
-      filterHost.innerHTML = baseTags.map(tag => `
-          <button type="button" class="filter-chip ${activeTag === tag ? 'active' : ''}" data-tag="${tag}">${tag}</button>
-        `).join('');
-      filterHost.querySelectorAll('[data-tag]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          activeTag = btn.dataset.tag || 'all';
-          render();
+      if (filterHost) {
+        filterHost.innerHTML = baseTags.map(tag => `
+            <button type="button" class="filter-chip ${activeTag === tag ? 'active' : ''}" data-tag="${tag}">${tag}</button>
+          `).join('');
+        filterHost.querySelectorAll('[data-tag]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            activeTag = btn.dataset.tag || 'all';
+            showAll = false;
+            render();
+          });
         });
-      });
+      }
 
-      libraryHost.innerHTML = filteredItems.length
-        ? filteredItems.map(item => `
-          <div class="item">
-            <div class="itemhead"><strong>${esc(item.title)}</strong><span class="tiny">${esc(item.kind)}</span></div>
-            <div class="muted">${esc(item.content)}</div>
-            <div class="tagrow">${(item.tags || []).map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
-          </div>`).join('')
-        : '<div class="muted">No memories match this tag filter.</div>';
+      if (libraryHost) {
+        const header = (activeTag === "all")
+          ? `<div class="tiny" style="margin-bottom:10px;">Showing ${filteredItems.length}${showAll ? '' : ` of ${filteredItemsRaw.length}`}</div>`
+          : `<div class="tiny" style="margin-bottom:10px;">Filtered by: <strong>${esc(activeTag)}</strong> (${filteredItemsRaw.length})</div>`;
 
-      storyHost.innerHTML = storyWall.map(story => `
-          <article class="story-card">
-            <div class="story-meta">
-              <span class="story-person">${esc(story.person)}</span>
-              <span class="story-lang">${esc(story.lang)}</span>
-            </div>
-            <h3>${esc(story.title)}</h3>
-            <div class="story-body">${esc(story.body)}</div>
-          </article>
-        `).join('');
+        const toggle = (activeTag === "all" && filteredItemsRaw.length > 12)
+          ? `<button type="button" class="filter-chip ${showAll ? 'active' : ''}" id="toggleAllBtn">${showAll ? 'Show less' : 'Show all'}</button>`
+          : '';
+
+        const body = filteredItems.length
+          ? filteredItems.map(item => `
+            <div class="item">
+              <div class="itemhead"><strong>${esc(item.title)}</strong><span class="tiny">${esc(item.kind)}</span></div>
+              <div class="muted">${esc(item.content)}</div>
+              <div class="tagrow">${(item.tags || []).map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
+            </div>`).join('')
+          : '<div class="muted">No memories match this tag filter.</div>';
+
+        libraryHost.innerHTML = `${header}${toggle ? `<div class="filterbar" style="margin-bottom:10px;">${toggle}</div>` : ''}${body}`;
+
+        const toggleBtn = document.getElementById('toggleAllBtn');
+        if (toggleBtn) {
+          toggleBtn.addEventListener('click', () => {
+            showAll = !showAll;
+            render();
+          });
+        }
+      }
+
+      if (storyHost) {
+        storyHost.innerHTML = storyWall.map(story => `
+            <article class="story-card">
+              <div class="story-meta">
+                <span class="story-person">${esc(story.person)}</span>
+                <span class="story-lang">${esc(story.lang)}</span>
+              </div>
+              <h3>${esc(story.title)}</h3>
+              <div class="story-body">${esc(story.body)}</div>
+            </article>
+          `).join('');
+      }
     }
 
     document.getElementById('prompt').textContent = prompts[Math.floor(Math.random() * prompts.length)];
