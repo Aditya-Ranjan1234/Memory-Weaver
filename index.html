@@ -343,15 +343,15 @@
       </div>
     </details>
 
-    <section class="card panel" style="margin-top:18px;">
-      <div class="section-title">
-        <h2>Stories Wall</h2>
+    <details class="card panel" style="margin-top:18px;" open>
+      <summary class="section-title" style="cursor:pointer; list-style:none;">
+        <h2 style="margin:0;">Stories Wall</h2>
         <div class="tiny">Multilingual family memories</div>
-      </div>
-      <p class="section-copy">Stories from different languages live together here, the same way they do in real families.</p>
+      </summary>
+      <p class="section-copy" style="margin-top:12px;">Stories from different languages live together here, the same way they do in real families.</p>
       <div class="filterbar" id="tagFilters"></div>
       <div class="story-wall" id="storyWall"></div>
-    </section>
+    </details>
 
     <section class="grid">
       <div class="card panel">
@@ -475,12 +475,78 @@
     ];
 
     const storyWall = [
-      { title: "Grandma's Mango Pickle", person: "Grandmother", lang: "Multilingual", tags: ["multilingual", "food", "recipe", "family"], body: `Every summer, dadi used to say: "Aam ka achaar sirf recipe nahi, yaadon ka swaad hai."\nThe whole house smelled of mustard oil, red chilli and sunshine.` },
-      { title: "First Day of School", person: "Mother", lang: "Multilingual", tags: ["multilingual", "school", "childhood"], body: `I cried outside the classroom saying "Mummy ghar jaana hai."\nBy afternoon I had already made my first friend.` },
-      { title: "Train to a New Life", person: "Father", lang: "Multilingual", tags: ["multilingual", "migration", "timeline"], body: `Our family boarded an overnight train to Bengaluru.\nThe journey changed everything.` },
-      { title: "Village Festival", person: "Aunt", lang: "Multilingual", tags: ["multilingual", "festival", "family"], body: `Deepavali in our village meant everyone shared sweets.\nChildren ran everywhere with sparklers.` },
-      { title: "Grandpa's First Job", person: "Grandfather", lang: "Multilingual", tags: ["multilingual", "work", "timeline"], body: `Thatha worked in a tiny textile shop.\nAfter years he owned his own business.` },
-      { title: "Parents' Marriage", person: "Parents", lang: "Multilingual", tags: ["multilingual", "marriage", "family", "timeline"], body: `Mummy and Papa first met only two days before marriage.\nToday they still laugh together.` },
+      {
+        title: "Grandma's Mango Pickle",
+        person: "Grandmother",
+        lang: "HI • TA • TE • KN • EN",
+        tags: ["multilingual", "food", "recipe", "family", "heritage"],
+        body: [
+          "Hindi: \"हर गर्मी दादी कहती थीं: 'आम का अचार सिर्फ रेसिपी नहीं, यादों का स्वाद है।'\"",
+          "Tamil: \"இதுல தான் குடும்பத்தின் ரகசியம் இருக்கு.\"",
+          "Telugu: \"మామిడి ఊరగాయ అంటే ఇంటి ప్రేమ.\"",
+          "Kannada: \"ಮಾವಿನ ಉಪ್ಪಿನಕಾಯಿ ಮನೆಯತನದ ನೆನಪು.\"",
+          "English: The whole house smelled of mustard oil, red chilli, and sunshine."
+        ].join("\\n")
+      },
+      {
+        title: "First Day of School",
+        person: "Mother",
+        lang: "HI • TA • TE • KN • EN",
+        tags: ["multilingual", "school", "childhood", "family"],
+        body: [
+          "Hindi: \"मैं रोते हुए बोला: 'मम्मी घर जाना है।'\"",
+          "Tamil: \"பயப்படாதே, நீ நல்லா படிப்ப.\"",
+          "Telugu: \"భయపడకు.\"",
+          "Kannada: \"ನೀನು ಚೆನ್ನಾಗಿ ಮಾಡ್ತೀಯ.\"",
+          "English: By afternoon, I had already made my first friend."
+        ].join("\\n")
+      },
+      {
+        title: "Train to a New Life",
+        person: "Father",
+        lang: "HI • TA • TE • EN",
+        tags: ["multilingual", "migration", "timeline", "city", "family"],
+        body: [
+          "Hindi: \"पापा बोले: 'यहीं से नई ज़िंदगी शुरू होगी।'\"",
+          "Tamil: \"இது நம்ம புதிய வாழ்க்கை.\"",
+          "Telugu: \"ఇది మన కొత్త ఆరంభం.\"",
+          "English: Our family boarded an overnight train to Bengaluru. The journey changed everything."
+        ].join("\\n")
+      },
+      {
+        title: "Village Festival",
+        person: "Aunt",
+        lang: "HI • TA • KN • EN",
+        tags: ["multilingual", "festival", "family", "culture"],
+        body: [
+          "Hindi: \"दीवाली में सब एक-दूसरे के घर जाते थे, मिठाई बाँटते थे।\"",
+          "Tamil: \"வாங்க சாப்பிடலாம்.\"",
+          "Kannada: \"ಹುಲಿಗೆ ಊಟ ಮಾಡಿದ್ರೆ ಸಂತೋಷ ಹೆಚ್ಚು.\"",
+          "English: Children ran everywhere with sparklers."
+        ].join("\\n")
+      },
+      {
+        title: "Grandpa's First Job",
+        person: "Grandfather",
+        lang: "HI • KN • EN",
+        tags: ["multilingual", "work", "timeline", "wisdom", "family"],
+        body: [
+          "Hindi: \"मेहनत कभी बेकार नहीं जाती।\"",
+          "Kannada: \"ಕೆಲಸ ಕಲಿಸಿದರೆ ಬದುಕು ಕಲಿಸುತ್ತದೆ.\"",
+          "English: Thatha worked in a tiny textile shop. Years later, he owned his own business."
+        ].join("\\n")
+      },
+      {
+        title: "Parents' Marriage",
+        person: "Parents",
+        lang: "TA • TE • EN",
+        tags: ["multilingual", "marriage", "family", "timeline", "story"],
+        body: [
+          "Tamil: \"அப்போ காதல் இல்ல, நம்பிக்கை இருந்தது.\"",
+          "Telugu: \"పెళ్లి తర్వాతే ప్రేమ మొదలైంది.\"",
+          "English: They met only two days before the wedding. Today they still laugh together."
+        ].join("\\n")
+      },
       { title: "College Road Trip", person: "Friends", lang: "Multilingual", tags: ["multilingual", "travel", "youth"], body: `Five friends squeezed into one small car and drove to Coorg.\nWe still remember the rain more than the destination.` },
       { title: "Flood Survival", person: "Family", lang: "Multilingual", tags: ["multilingual", "crisis", "kindness", "village"], body: `Our village flooded overnight.\nNeighbors shared food without asking.\nThat disaster taught us kindness.` },
       { title: "Sunday Biryani", person: "Father", lang: "Multilingual", tags: ["multilingual", "food", "family"], body: `Every Sunday Appa made biryani.\nThe aroma filled the entire house before lunch.` },
@@ -704,7 +770,7 @@
                 <span class="story-lang">${esc(story.lang)}</span>
               </div>
               <h3>${esc(story.title)}</h3>
-              <div class="story-body">${esc(story.body)}</div>
+              <div class="story-body">${esc(story.body).replace(/\\n/g, '<br>')}</div>
             </article>
           `).join('');
       }
