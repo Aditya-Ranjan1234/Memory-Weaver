@@ -320,7 +320,7 @@
             <div class="pill">Story Book</div>
           </div>
         </div>
-        <div class="note">The current build runs entirely in the browser, with seeded memory content and no empty-state dead ends.</div>
+        <div class="note">A family memory archive that keeps stories, places, food, and future messages together.</div>
         <div class="card">
           <div class="tiny">Prompt seed</div>
           <strong id="prompt"></strong>
@@ -557,7 +557,11 @@
     }
 
     function saveState(state) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch {
+        // Some environments block storage (notably certain file:// contexts).
+      }
     }
 
     function resetDemo() {
