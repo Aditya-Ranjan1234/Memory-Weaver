@@ -1,4 +1,27 @@
 {
   "version": 2,
-  "cleanUrls": true
+  "cleanUrls": true,
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "favicon.svg", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/favicon.svg", "dest": "/favicon.svg" },
+    { "src": "/favicon.ico", "dest": "/favicon.svg" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    }
+  ]
 }
