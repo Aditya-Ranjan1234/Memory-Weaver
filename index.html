@@ -348,7 +348,7 @@
         <h2>Stories Wall</h2>
         <div class="tiny">Multilingual family memories</div>
       </div>
-      <p class="section-copy">This section is preloaded so the deployed site never feels empty. It highlights how one memory can carry Hindi, Tamil, Telugu, Kannada, and English together.</p>
+      <p class="section-copy">Stories from different languages live together here, the same way they do in real families.</p>
       <div class="filterbar" id="tagFilters"></div>
       <div class="story-wall" id="storyWall"></div>
     </section>
@@ -729,8 +729,42 @@
       render();
     });
 
-    if (!localStorage.getItem(STORAGE_KEY)) saveState(clone(demoState));
-    render();
+    function emergencyRender() {
+      const statsHost = document.getElementById('stats');
+      const libraryHost = document.getElementById('library');
+      const storyHost = document.getElementById('storyWall');
+      if (!statsHost || !libraryHost || !storyHost) return;
+      const state = clone(demoState);
+      const items = state.items || [];
+      statsHost.innerHTML = [
+        ['Memories', items.length],
+        ['People', (state.people || []).length],
+        ['Recipes', items.filter(i => i.kind === 'recipe').length]
+      ].map(([label, value]) => `<div class="stat"><strong>${value}</strong><span class="muted">${label}</span></div>`).join('');
+      libraryHost.innerHTML = items.slice(0, 16).map(item => `
+        <div class="item">
+          <div class="itemhead"><strong>${esc(item.title)}</strong><span class="tiny">${esc(item.kind)}</span></div>
+          <div class="muted">${esc(item.content)}</div>
+        </div>
+      `).join('');
+      storyHost.innerHTML = storyWall.slice(0, 12).map(story => `
+        <article class="story-card">
+          <div class="story-meta">
+            <span class="story-person">${esc(story.person)}</span>
+            <span class="story-lang">${esc(story.lang)}</span>
+          </div>
+          <h3>${esc(story.title)}</h3>
+          <div class="story-body">${esc(story.body)}</div>
+        </article>
+      `).join('');
+    }
+
+    try {
+      if (!localStorage.getItem(STORAGE_KEY)) saveState(clone(demoState));
+      render();
+    } catch (e) {
+      emergencyRender();
+    }
   </script>
 </body>
 </html>
