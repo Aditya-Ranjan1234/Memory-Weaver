@@ -71,12 +71,32 @@
     .muted { color: var(--muted); }
     .tiny { font-size: 12px; color: var(--muted); }
     .tag { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #f4eadc; color: #6d4b2a; }
+    .story-hero {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .story-banner, .story-side {
+      border-radius: 20px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.72);
+    }
+    .story-banner h3, .story-side h3 { margin: 0 0 8px; font-size: 18px; }
+    .story-banner p, .story-side p { margin: 0; color: var(--muted); line-height: 1.6; }
     .hero-side .card { padding: 14px; background: #fff; }
     .note {
       padding: 14px 16px; border-radius: 18px; background: #fff; border: 1px solid var(--line); color: var(--muted);
     }
+    .section-copy {
+      max-width: 70ch;
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
     @media (max-width: 900px) {
-      .hero, .grid, .stats { grid-template-columns: 1fr; }
+      .hero, .grid, .stats, .story-hero { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -162,6 +182,7 @@
           <h2>Story Tools</h2>
           <div class="tiny">Life story, capsules, recipes</div>
         </div>
+        <p class="section-copy">The archive is built to feel alive from the first visit. These sample stories and timelines show how a family memory vault can hold voice, place, food, and future messages together.</p>
         <div class="list" id="tools"></div>
       </div>
     </section>
@@ -172,14 +193,56 @@
           <h2>Timeline</h2>
           <div class="tiny">Chronological life events</div>
         </div>
-        <div class="list" id="timeline"></div>
+        <div class="list" id="timeline">
+          <div class="item">
+            <div class="itemhead"><strong>1965 - First school day</strong><span class="tiny">Learning begins</span></div>
+            <div class="muted">A neighbor walked the child to school and reminded them to never forget their lunch box.</div>
+          </div>
+          <div class="item">
+            <div class="itemhead"><strong>1972 - Moved to Bengaluru</strong><span class="tiny">New city, new life</span></div>
+            <div class="muted">The family left the village, took a shared bus, and stayed with relatives while looking for work.</div>
+          </div>
+          <div class="item">
+            <div class="itemhead"><strong>1978 - Marriage</strong><span class="tiny">Street-wide celebration</span></div>
+            <div class="muted">The whole street helped cook, arrange flowers, and welcome guests into the family home.</div>
+          </div>
+          <div class="item">
+            <div class="itemhead"><strong>1980 - First child</strong><span class="tiny">Parenthood</span></div>
+            <div class="muted">Blankets, sweets, and names arrived from every relative who came to bless the newborn.</div>
+          </div>
+          <div class="item">
+            <div class="itemhead"><strong>1992 - First business day</strong><span class="tiny">Work and dignity</span></div>
+            <div class="muted">A small shop became a place where every customer was greeted by name and every coin was counted carefully.</div>
+          </div>
+        </div>
       </div>
       <div class="card panel">
         <div class="section-title">
           <h2>Memory Library</h2>
           <div class="tiny">All captured items</div>
         </div>
-        <div class="list" id="library"></div>
+        <div class="list" id="library">
+          <div class="item">
+            <div class="itemhead"><strong>Childhood home</strong><span class="tiny">memory</span></div>
+            <div class="muted">A mango tree in the courtyard, a tin roof in the rain, and evenings filled with stories.</div>
+            <div class="tagrow"><span class="tag">childhood</span><span class="tag">place</span><span class="tag">home</span></div>
+          </div>
+          <div class="item">
+            <div class="itemhead"><strong>Festival sweet</strong><span class="tiny">recipe</span></div>
+            <div class="muted">Semolina, ghee, sugar, and cardamom roasted slowly with cashews on top.</div>
+            <div class="tagrow"><span class="tag">food</span><span class="tag">recipe</span><span class="tag">festival</span></div>
+          </div>
+          <div class="item">
+            <div class="itemhead"><strong>Grandma's biryani</strong><span class="tiny">recipe</span></div>
+            <div class="muted">Rice, yogurt, ginger, garlic, chili, and whole spices cooked slowly with fried onions.</div>
+            <div class="tagrow"><span class="tag">family</span><span class="tag">recipe</span><span class="tag">food</span></div>
+          </div>
+          <div class="item">
+            <div class="itemhead"><strong>For your wedding day</strong><span class="tiny">capsule</span></div>
+            <div class="muted">Keep your family close and remember that love is built in small daily choices.</div>
+            <div class="tagrow"><span class="tag">future</span><span class="tag">capsule</span></div>
+          </div>
+        </div>
       </div>
     </section>
   </div>
@@ -228,15 +291,19 @@
     const fmt = s => new Date(s).toLocaleString();
     const esc = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
+    function clone(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return structuredClone(demoState);
+        if (!raw) return clone(demoState);
         const parsed = JSON.parse(raw);
-        if (!parsed.items) return structuredClone(demoState);
+        if (!parsed.items) return clone(demoState);
         return parsed;
       } catch {
-        return structuredClone(demoState);
+        return clone(demoState);
       }
     }
 
@@ -245,7 +312,7 @@
     }
 
     function resetDemo() {
-      saveState(structuredClone(demoState));
+      saveState(clone(demoState));
       render();
     }
 
@@ -356,8 +423,8 @@
       render();
     });
 
-    if (!localStorage.getItem(STORAGE_KEY)) resetDemo();
-    else render();
+    render();
+    if (!localStorage.getItem(STORAGE_KEY)) saveState(clone(demoState));
   </script>
 </body>
 </html>
