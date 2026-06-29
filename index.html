@@ -304,8 +304,8 @@
       <div class="card hero-main">
         <div class="eyebrow">Memory Weaver</div>
         <h1>Capture a life. Preserve the voice. Build the family archive.</h1>
-        <p class="lead">A mobile-first web app for recording memories, importing stories, organizing timelines, and preparing future memory capsules.</p>
-        <div class="version-badge">Live build v3 - multilingual wall + floating composer</div>
+        <p class="lead">A polished family memory platform for recording stories, organizing timelines, and preserving cultural detail across generations.</p>
+        <div class="version-badge">Live build v4</div>
         <div class="stats" id="stats"></div>
       </div>
       <div class="card hero-side">
@@ -320,7 +320,7 @@
             <div class="pill">Story Book</div>
           </div>
         </div>
-        <div class="note">This Vercel-ready version stores everything in <code>localStorage</code>, so it works without a backend.</div>
+        <div class="note">The current build runs entirely in the browser, with seeded memory content and no empty-state dead ends.</div>
         <div class="card">
           <div class="tiny">Prompt seed</div>
           <strong id="prompt"></strong>
@@ -346,7 +346,7 @@
     <section class="card panel" style="margin-top:18px;">
       <div class="section-title">
         <h2>Stories Wall</h2>
-        <div class="tiny">Multilingual family memories - live build v3</div>
+        <div class="tiny">Multilingual family memories</div>
       </div>
       <p class="section-copy">This section is preloaded so the deployed site never feels empty. It highlights how one memory can carry Hindi, Tamil, Telugu, Kannada, and English together.</p>
       <div class="filterbar" id="tagFilters"></div>
@@ -475,45 +475,52 @@
     ];
 
     const storyWall = [
-      {
-        title: "Grandma's Mango Pickle",
-        person: "Grandmother",
-        lang: "Hindi / Tamil / Telugu / Kannada",
-        body: `"Every summer, dadi used to say 'Aam ka achaar sirf recipe nahi, yaadon ka swaad hai.'\nPaati carefully cut raw mangoes saying it was the family's pride.\nAvva smiled, 'Mamidikaya is home-made love.'\nAjji always added, 'Mavina uppinakayi maneyinda bandha nenapu.'\nThe whole house smelled of mustard oil, red chilli and sunshine."`
-      },
-      {
-        title: "First Day of School",
-        person: "Mother",
-        lang: "Hindi / Tamil / Telugu / Kannada",
-        body: `"I cried outside the classroom saying 'Mummy ghar jaana hai.'\nAmma held my hand and said, 'Poyi padichu vada.'\nIn Telugu, she whispered, 'Bhaya padaku.'\nTeacher smiled in Kannada, 'Neenu chennagiddiya.'\nBy afternoon I had already made my first friend."`
-      },
-      {
-        title: "Train to a New Life",
-        person: "Father",
-        lang: "Hindi / Tamil / Telugu",
-        body: `"Our family boarded an overnight train to Bengaluru.\nPapa said, 'Yahin se nayi zindagi shuru hogi.'\nAppa looked outside saying, 'Ithu namma pudhiya payanam.'\nNana whispered, 'Idi kotha aarambham.'\nThe journey changed everything."`
-      },
-      {
-        title: "Village Festival",
-        person: "Aunt",
-        lang: "Hindi / Tamil / Kannada",
-        body: `"Deepavali in our village meant everyone shared sweets.\n'Sab ek dusre ke ghar jaate the.'\nPaati prepared adhirasam.\nAjji made holige and children ran everywhere with sparklers."`
-      },
-      {
-        title: "Grandpa's First Job",
-        person: "Grandfather",
-        lang: "Hindi / Kannada",
-        body: `"Thatha worked in a tiny textile shop.\nHe always said, 'Mehnat kabhi waste nahi jaati.'\nIn Kannada he smiled, 'Kelasadalli gaurava ide.'\nAfter years he owned his own business."`
-      },
-      {
-        title: "Message for Future Grandchildren",
-        person: "Grandparent",
-        lang: "Hindi / Tamil / Telugu / Kannada / English",
-        body: `"If you are reading this many years from now, remember where your family came from.\nSpeak your mother tongue, cook together, visit your grandparents, and never let these stories disappear.\n'Yaadein hi asli virasat hain.'\n'Nenapugalu namma nija sampattu.'\n'Jeevitha katha ni cheruvulo undali.'"`
-      }
+      { title: "Grandma's Mango Pickle", person: "Grandmother", lang: "Multilingual", tags: ["multilingual", "food", "recipe", "family"], body: `Every summer, dadi used to say: "Aam ka achaar sirf recipe nahi, yaadon ka swaad hai."\nThe whole house smelled of mustard oil, red chilli and sunshine.` },
+      { title: "First Day of School", person: "Mother", lang: "Multilingual", tags: ["multilingual", "school", "childhood"], body: `I cried outside the classroom saying "Mummy ghar jaana hai."\nBy afternoon I had already made my first friend.` },
+      { title: "Train to a New Life", person: "Father", lang: "Multilingual", tags: ["multilingual", "migration", "timeline"], body: `Our family boarded an overnight train to Bengaluru.\nThe journey changed everything.` },
+      { title: "Village Festival", person: "Aunt", lang: "Multilingual", tags: ["multilingual", "festival", "family"], body: `Deepavali in our village meant everyone shared sweets.\nChildren ran everywhere with sparklers.` },
+      { title: "Grandpa's First Job", person: "Grandfather", lang: "Multilingual", tags: ["multilingual", "work", "timeline"], body: `Thatha worked in a tiny textile shop.\nAfter years he owned his own business.` },
+      { title: "Parents' Marriage", person: "Parents", lang: "Multilingual", tags: ["multilingual", "marriage", "family", "timeline"], body: `Mummy and Papa first met only two days before marriage.\nToday they still laugh together.` },
+      { title: "College Road Trip", person: "Friends", lang: "Multilingual", tags: ["multilingual", "travel", "youth"], body: `Five friends squeezed into one small car and drove to Coorg.\nWe still remember the rain more than the destination.` },
+      { title: "Flood Survival", person: "Family", lang: "Multilingual", tags: ["multilingual", "crisis", "kindness", "village"], body: `Our village flooded overnight.\nNeighbors shared food without asking.\nThat disaster taught us kindness.` },
+      { title: "Sunday Biryani", person: "Father", lang: "Multilingual", tags: ["multilingual", "food", "family"], body: `Every Sunday Appa made biryani.\nThe aroma filled the entire house before lunch.` },
+      { title: "Learning Bicycle", person: "Father", lang: "Multilingual", tags: ["multilingual", "childhood", "learning"], body: `Papa ran behind my bicycle shouting "Brake dabao!"\nFinally I rode without support.` },
+      { title: "Bedtime Stories", person: "Grandmother", lang: "Multilingual", tags: ["multilingual", "childhood", "stories"], body: `Every night Paati narrated stories about kings, birds and rivers.\nEven today those stories feel more real than movies.` },
+      { title: "Leaving the Village", person: "Mother", lang: "Multilingual", tags: ["multilingual", "migration", "timeline"], body: `We packed everything into two bags and moved to Bengaluru.\nThe city gave us opportunities our village never could.` },
+      { title: "Brother's Sacrifice", person: "Brother", lang: "Multilingual", tags: ["multilingual", "family", "sacrifice"], body: `My elder brother left college so I could continue mine.\nI still believe my degree belongs to both of us.` },
+      { title: "Gully Cricket", person: "Neighborhood", lang: "Multilingual", tags: ["multilingual", "childhood", "community"], body: `The street became our stadium every evening.\nUncle shouted but later joined the match himself.` },
+      { title: "First Salary", person: "Self", lang: "Multilingual", tags: ["multilingual", "work", "family"], body: `When I received my first salary, I bought a saree for Maa.\nThat smile was worth more than the money.` },
+      { title: "Temple Festival", person: "Community", lang: "Multilingual", tags: ["multilingual", "festival", "community"], body: `Nadaswaram echoed through the streets.\nTelugu, Kannada, Tamil, Hindi: it truly felt like one family.` },
+      { title: "Losing Our Old House", person: "Family", lang: "Multilingual", tags: ["multilingual", "home", "memory"], body: `Our ancestral house was demolished after eighty years.\nWe collected one old brick to remember home.` },
+      { title: "Community Wedding", person: "Street", lang: "Multilingual", tags: ["multilingual", "community", "family"], body: `The whole street cooked together.\nEveryone became family for one day.` },
+      { title: "Best Teacher", person: "Teacher", lang: "Multilingual", tags: ["multilingual", "school", "career"], body: `My science teacher believed in me when nobody else did.\nThat advice shaped my career.` },
+      { title: "Cooking During Power Cuts", person: "Family", lang: "Multilingual", tags: ["multilingual", "family", "food"], body: `Electricity disappeared almost every evening.\nWe cooked under lantern light while cousins sang old songs.` },
+      { title: "First Flight", person: "Mother", lang: "Multilingual", tags: ["multilingual", "travel", "milestone"], body: `When the airplane took off, Amma tightly held my hand.\nWe all looked outside like little children.` },
+      { title: "Lockdown Memories", person: "Family", lang: "Multilingual", tags: ["multilingual", "family", "together"], body: `During lockdown we finally had dinner together every night.\nFamily became closer.` },
+      { title: "Saving Grandma's Recipe Book", person: "Family", lang: "Multilingual", tags: ["multilingual", "food", "heritage"], body: `Old notebooks were getting damaged by rain.\nWe scanned every page: four generations of memories.` },
+      { title: "Daughter's Wedding Farewell", person: "Family", lang: "Multilingual", tags: ["multilingual", "marriage", "family"], body: `Vidai was harder than anyone expected.\nTears, smiles and blessings mixed together.` },
+      { title: "Kindness During Crisis", person: "Strangers", lang: "Multilingual", tags: ["multilingual", "kindness", "crisis"], body: `Strangers gave us food when our bus broke down.\nWe never forgot their kindness.` },
+      { title: "Banyan Tree", person: "Community", lang: "Multilingual", tags: ["multilingual", "place", "community"], body: `The old banyan tree was our meeting place for decades.\nFestivals, arguments, celebrations and stories began under its shade.` },
+      { title: "Farming Lessons", person: "Grandfather", lang: "Multilingual", tags: ["multilingual", "wisdom", "work"], body: `Grandpa said: "Farming teaches patience better than any school."\nEvery seed reminded us that good things take time.` },
+      { title: "Festival Sweet Theft", person: "Siblings", lang: "Multilingual", tags: ["multilingual", "festival", "family"], body: `We secretly stole laddoos before Diwali guests arrived.\nGrandma pretended not to notice.` },
+      { title: "Graduation Day", person: "Friends", lang: "Multilingual", tags: ["multilingual", "milestone", "youth"], body: `College ended with laughter, hugs and silent tears.\nLife had different plans.` },
+      { title: "Message for Future Grandchildren", person: "Grandparent", lang: "Multilingual", tags: ["multilingual", "heritage", "wisdom", "capsule"], body: `If you are reading this many years from now, remember where your family came from.\nSpeak your mother tongue, cook together, visit your grandparents, and never let these stories disappear.` }
     ];
+
+    const storyLibrarySeed = storyWall.map((story, index) => ({
+      id: seedItems.length + index + 1,
+      kind: 'memory',
+      title: story.title,
+      content: story.body.replace(/^"|"$/g, '').replace(/\\n/g, '\n'),
+      source: 'text',
+      created_at: '2026-06-29T00:00:00.000Z',
+      person: story.person,
+      language: 'multilingual',
+      tags: ['multilingual', 'heritage', 'family', 'story'],
+      metadata: { languages: story.lang, featured: true }
+    }));
     const baseTags = ["all", "childhood", "place", "home", "migration", "timeline", "food", "recipe", "festival", "future", "capsule", "work", "story", "history", "wisdom", "song", "dialect", "music", "marriage", "family", "city", "rain", "language", "culture", "multilingual", "heritage"];
-    let activeTag = "all";
+    let activeTag = "multilingual";
 
     const demoState = {
       nextId: seedItems.length + 1,
@@ -527,20 +534,7 @@
       }))
     };
 
-    const multilingualSeedItems = storyWall.map((story, index) => ({
-      id: seedItems.length + index + 1,
-      kind: 'memory',
-      title: story.title,
-      content: story.body.replace(/^"|"$/g, '').replace(/\\n/g, '\n'),
-      source: 'text',
-      created_at: '2026-06-29T00:00:00.000Z',
-      person: story.person,
-      language: 'multilingual',
-      tags: ['multilingual', 'family', 'story'],
-      metadata: { languages: story.lang, featured: true }
-    }));
-
-    demoState.items = [...demoState.items, ...multilingualSeedItems];
+    demoState.items = [...demoState.items, ...storyLibrarySeed];
     demoState.nextId = demoState.items.length + 1;
 
     const fmt = s => new Date(s).toLocaleString();
@@ -616,14 +610,23 @@
       const filteredItems = activeTag === "all"
         ? items
         : items.filter(item => (item.tags || []).some(tag => String(tag).toLowerCase() === activeTag.toLowerCase()));
+      const statsHost = document.getElementById('stats');
+      const toolsHost = document.getElementById('tools');
+      const timelineHost = document.getElementById('timeline');
+      const libraryHost = document.getElementById('library');
+      const storyHost = document.getElementById('storyWall');
+      const filterHost = document.getElementById('tagFilters');
+      if (!statsHost || !toolsHost || !timelineHost || !libraryHost || !storyHost || !filterHost) {
+        return;
+      }
 
-      document.getElementById('stats').innerHTML = [
+      statsHost.innerHTML = [
         ['Memories', items.length],
         ['People', people],
         ['Recipes', recipes]
       ].map(([label, value]) => `<div class="stat"><strong>${value}</strong><span class="muted">${label}</span></div>`).join('');
 
-      document.getElementById('tools').innerHTML = `
+      toolsHost.innerHTML = `
         <div class="item"><strong>Life Story Builder</strong><div class="muted">Generate a chaptered family story from captured memories.</div></div>
         <div class="item"><strong>Talk to Grandma Mode</strong><div class="muted">Ask questions and answer only from stored memories.</div></div>
         <div class="item"><strong>Memory Capsules</strong><div class="muted">Future messages with unlock dates.</div></div>
@@ -631,7 +634,7 @@
         <div class="item"><strong>WhatsApp Ingestion</strong><div class="muted">Paste a forwarded story or media URL and save it as a memory.</div></div>
       `;
 
-      document.getElementById('timeline').innerHTML = timeline.length
+      timelineHost.innerHTML = timeline.length
         ? timeline.map(item => `
           <div class="item">
             <div class="itemhead"><strong>${esc(item.title)}</strong><span class="tiny">${fmt(item.created_at)}</span></div>
@@ -639,20 +642,17 @@
           </div>`).join('')
         : '<div class="muted">No timeline events yet.</div>';
 
-      const filterHost = document.getElementById('tagFilters');
-      if (filterHost) {
-        filterHost.innerHTML = baseTags.map(tag => `
+      filterHost.innerHTML = baseTags.map(tag => `
           <button type="button" class="filter-chip ${activeTag === tag ? 'active' : ''}" data-tag="${tag}">${tag}</button>
         `).join('');
-        filterHost.querySelectorAll('[data-tag]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            activeTag = btn.dataset.tag || 'all';
-            render();
-          });
+      filterHost.querySelectorAll('[data-tag]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeTag = btn.dataset.tag || 'all';
+          render();
         });
-      }
+      });
 
-      document.getElementById('library').innerHTML = filteredItems.length
+      libraryHost.innerHTML = filteredItems.length
         ? filteredItems.map(item => `
           <div class="item">
             <div class="itemhead"><strong>${esc(item.title)}</strong><span class="tiny">${esc(item.kind)}</span></div>
@@ -661,9 +661,7 @@
           </div>`).join('')
         : '<div class="muted">No memories match this tag filter.</div>';
 
-      const wall = document.getElementById('storyWall');
-      if (wall) {
-        wall.innerHTML = storyWall.map(story => `
+      storyHost.innerHTML = storyWall.map(story => `
           <article class="story-card">
             <div class="story-meta">
               <span class="story-person">${esc(story.person)}</span>
@@ -673,7 +671,6 @@
             <div class="story-body">${esc(story.body)}</div>
           </article>
         `).join('');
-      }
     }
 
     document.getElementById('prompt').textContent = prompts[Math.floor(Math.random() * prompts.length)];
