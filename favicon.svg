@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Memory Weaver">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8c5e3c"/>
+      <stop offset="100%" stop-color="#c78b5a"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+  <path d="M26 38h76v10H26zM26 58h56v10H26zM26 78h66v10H26z" fill="#fffaf2" opacity=".95"/>
+  <circle cx="100" cy="84" r="10" fill="#fffaf2" opacity=".92"/>
+</svg>
