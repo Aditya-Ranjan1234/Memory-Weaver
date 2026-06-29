@@ -468,24 +468,7 @@
       "What was your first job like?"
     ];
 
-    const seedItems = [
-      { kind: 'memory', title: 'Childhood home', content: 'I grew up in a house with a mango tree in the courtyard and a tin roof that sang in the rain.', source: 'text', tags: ['childhood', 'place', 'home'], metadata: { prompt: 'Where did you grow up?' } },
-      { kind: 'timeline_event', title: 'Moved to Bengaluru', content: 'Moved from the village to Bengaluru in 1972 to look for work and stay with relatives.', source: 'text', tags: ['migration', 'timeline'], metadata: { year: 1972 } },
-      { kind: 'timeline_event', title: 'First school day', content: 'On the first school day, a neighbor walked us there and told us to remember our lunch boxes.', source: 'text', tags: ['school', 'timeline', 'childhood'], metadata: { year: 1965 } },
-      { kind: 'recipe', title: "Festival sweet", content: 'Take semolina, ghee, sugar, and cardamom. Roast slowly and finish with cashews.', source: 'voice', tags: ['food', 'recipe'], metadata: { occasion: 'festival' } },
-      { kind: 'capsule', title: 'For your wedding day', content: 'Keep your family close and remember that love is built in small daily choices.', source: 'voice', tags: ['future', 'capsule'], metadata: { unlock_date: '2035-01-01' } },
-      { kind: 'memory', title: 'First job', content: 'My first job was in a small shop where I learned to greet everyone by name and count change carefully.', source: 'text', tags: ['work', 'story'] },
-      { kind: 'memory', title: 'Partition story', content: 'When families were split by news and fear, people still shared water, food, and directions with strangers.', source: 'text', tags: ['history', 'wisdom'] },
-      { kind: 'timeline_event', title: 'First home in the city', content: 'The first city home had one room, a shared tap, and the neighbors taught us which bus to take.', source: 'text', tags: ['city', 'timeline', 'home'], metadata: { year: 1973 } },
-      { kind: 'recipe', title: "Grandma's biryani", content: 'Marinate rice and vegetables with yogurt, ginger, garlic, chili, and whole spices; cook slowly with fried onions.', source: 'voice', tags: ['recipe', 'food', 'family'] },
-      { kind: 'memory', title: 'Festival song', content: 'The song about rain on a tin roof was always sung before the lamps were lit.', source: 'voice', tags: ['song', 'dialect', 'music'] },
-      { kind: 'timeline_event', title: 'Marriage', content: 'Married in a ceremony where the whole street helped with cooking, flowers, and seating guests.', source: 'text', tags: ['marriage', 'timeline', 'family'], metadata: { year: 1978 } },
-      { kind: 'memory', title: 'Village market', content: 'The market had one tea stall, two vegetable carts, and everyone knew which coconut vendor told the best stories.', source: 'text', tags: ['village', 'place', 'memory'] }
-      ,{ kind: 'memory', title: 'Rainy season memory', content: 'During the first heavy rain, everyone gathered on the verandah to watch the water race across the yard.', source: 'text', tags: ['rain', 'family', 'place'] },
-      { kind: 'timeline_event', title: 'First child', content: 'When the first child arrived, the entire family brought blankets, sweets, and names they hoped would bring luck.', source: 'text', tags: ['family', 'timeline', 'parenthood'], metadata: { year: 1980 } },
-      { kind: 'memory', title: 'Dialect phrase', content: 'There was always one phrase that meant both hello and take your seat, depending on the tone.', source: 'voice', tags: ['dialect', 'language', 'culture'] },
-      { kind: 'capsule', title: 'For your graduation', content: 'Do not rush your life. Let your work speak before your words do.', source: 'voice', tags: ['future', 'capsule', 'wisdom'], metadata: { unlock_date: '2030-06-01' } }
-    ];
+    const seedItems = [];
 
     const storyWall = [
       {
@@ -607,7 +590,18 @@
       { title: "Village Festival", person: "Aunt", lang: "Kannada", tags: ["multilingual", "language:kn", "festival"], body: "\u0cb9\u0cca\u0cb3\u0cbf\u0c97\u0cc6 \u0c8a\u0c9f \u0cae\u0cbe\u0ca1\u0cbf\u0ca6\u0ccd\u0cb0\u0cc6 \u0cb8\u0c82\u0ca4\u0ccb\u0cb7 \u0cb9\u0cc6\u0c9a\u0ccd\u0c9a\u0cc1." }
     ];
 
-    const storyLibrarySeed = storyWallCards.map((story, index) => ({
+    // Replace earlier demo content with user-provided stories (one language per story).
+    const storyWallCards2 = [
+      { title: "\\u0cae\\u0cca\\u0ca6\\u0cb2 \\u0cb8\\u0c82\\u0cac\\u0cb3", person: "Family", tags: ["multilingual", "work", "family"], body: "\\u0ca8\\u0ca8\\u0ccd\\u0ca8 \\u0cae\\u0cca\\u0ca6\\u0cb2 \\u0cb8\\u0c82\\u0cac\\u0cb3 \\u0cac\\u0c82\\u0ca6 \\u0ca6\\u0cbf\\u0ca8 \\u0c85\\u0cae\\u0ccd\\u0cae\\u0ca8\\u0cbf\\u0c97\\u0cc6 \\u0c92\\u0c82\\u0ca6\\u0cc1 \\u0cb8\\u0cc0\\u0cb0\\u0cc6 \\u0ca4\\u0c82\\u0ca6\\u0cc6.\\n\\u0c85\\u0cb5\\u0cb0\\u0cc1 \\u0c85\\u0ca6\\u0ca8\\u0ccd\\u0ca8\\u0cc1 \\u0ca8\\u0ccb\\u0ca1\\u0cbf\\u0ca6 \\u0c95\\u0cc2\\u0ca1\\u0cb2\\u0cc7 \\u0c95\\u0ca3\\u0ccd\\u0ca3\\u0cb2\\u0ccd\\u0cb2\\u0cbf \\u0ca8\\u0cc0\\u0cb0\\u0cc1 \\u0ca4\\u0cc1\\u0c82\\u0cac\\u0cbf\\u0ca4\\u0cc1.\\n**\\\"\\u0c87\\u0ca6\\u0c95\\u0ccd\\u0c95\\u0cbf\\u0c82\\u0ca4 \\u0ca6\\u0cca\\u0ca1\\u0ccd\\u0ca1 \\u0c89\\u0ca1\\u0cc1\\u0c97\\u0cca\\u0cb0\\u0cc6 \\u0cac\\u0cc7\\u0ca1,\\\"** \\u0c8e\\u0c82\\u0ca6\\u0cc1 \\u0cb9\\u0cc7\\u0cb3\\u0cbf\\u0ca6\\u0cb0\\u0cc1.\\n\\u0c86 \\u0ca6\\u0cbf\\u0ca8 \\u0cb9\\u0ca3\\u0c95\\u0ccd\\u0c95\\u0cbf\\u0c82\\u0ca4 \\u0c85\\u0cb5\\u0cb0 \\u0ca8\\u0c97\\u0cc1 \\u0ca8\\u0ca8\\u0c97\\u0cc6 \\u0cb9\\u0cc6\\u0c9a\\u0ccd\\u0c9a\\u0cc1 \\u0cac\\u0cc6\\u0cb2\\u0cc6\\u0cac\\u0cbe\\u0cb3\\u0cbf\\u0ca4\\u0cc1." },
+      { title: "Grandmother's Mango Pickle", person: "Family", tags: ["multilingual", "food", "tradition"], body: "Every summer, Grandma would wake before sunrise to prepare mango pickle.\\nShe insisted that every jar should be mixed slowly and patiently.\\nThe whole house smelled of mustard oil, spices, and sunshine.\\nEven today, one bite brings back memories of childhood vacations." },
+      { title: "\\u0b95\\u0bcb\\u0bb5\\u0bbf\\u0bb2\\u0bcd \\u0ba4\\u0bbf\\u0bb0\\u0bc1\\u0bb5\\u0bbf\\u0bb4\\u0bbe", person: "Family", tags: ["multilingual", "festival"], body: "\\u0b95\\u0bcb\\u0bb5\\u0bbf\\u0bb2\\u0bcd \\u0ba4\\u0bbf\\u0bb0\\u0bc1\\u0bb5\\u0bbf\\u0bb4\\u0bbe \\u0bb5\\u0ba8\\u0bcd\\u0ba4\\u0bbe\\u0bb2\\u0bcd \\u0b95\\u0bbf\\u0bb0\\u0bbe\\u0bae\\u0bae\\u0bc7 \\u0bb5\\u0bbf\\u0bb4\\u0bbf\\u0ba4\\u0bcd\\u0ba4\\u0bc1\\u0b95\\u0bcd \\u0b95\\u0bca\\u0bb3\\u0bcd\\u0bb5\\u0ba4\\u0bc1 \\u0baa\\u0bcb\\u0bb2 \\u0b87\\u0bb0\\u0bc1\\u0b95\\u0bcd\\u0b95\\u0bc1\\u0bae\\u0bcd.\\n\\u0ba8\\u0bbe\\u0ba4\\u0bb8\\u0bcd\\u0bb5\\u0bb0\\u0bae\\u0bcd, \\u0ba4\\u0bc0\\u0baa\\u0b99\\u0bcd\\u0b95\\u0bb3\\u0bcd, \\u0bae\\u0bb2\\u0bb0\\u0bcd \\u0b85\\u0bb2\\u0b99\\u0bcd\\u0b95\\u0bbe\\u0bb0\\u0bae\\u0bcd \\u0b8e\\u0b99\\u0bcd\\u0b95\\u0bc1\\u0bae\\u0bcd \\u0b95\\u0bbe\\u0ba3\\u0baa\\u0bcd\\u0baa\\u0b9f\\u0bc1\\u0bae\\u0bcd.\\n\\u0b8e\\u0bb2\\u0bcd\\u0bb2\\u0bcb\\u0bb0\\u0bc1\\u0bae\\u0bcd \\u0b9a\\u0bc7\\u0bb0\\u0bcd\\u0ba8\\u0bcd\\u0ba4\\u0bc1 \\u0b89\\u0ba3\\u0bb5\\u0bc1 \\u0b89\\u0ba3\\u0bcd\\u0b9f\\u0bc1 \\u0bae\\u0b95\\u0bbf\\u0bb4\\u0bcd\\u0b9a\\u0bcd\\u0b9a\\u0bbf\\u0baf\\u0bbe\\u0b95 \\u0b95\\u0bca\\u0ba3\\u0bcd\\u0b9f\\u0bbe\\u0b9f\\u0bc1\\u0bb5\\u0bcb\\u0bae\\u0bcd.\\n\\u0b85\\u0ba8\\u0bcd\\u0ba4 \\u0ba8\\u0bbe\\u0b9f\\u0bcd\\u0b95\\u0bb3\\u0bcd \\u0b87\\u0ba9\\u0bcd\\u0ba9\\u0bc1\\u0bae\\u0bcd \\u0bae\\u0ba9\\u0ba4\\u0bbf\\u0bb2\\u0bcd \\u0bb5\\u0bbe\\u0bb4\\u0bcd\\u0b95\\u0bbf\\u0ba9\\u0bcd\\u0bb1\\u0ba9." },
+      { title: "Brother's Sacrifice", person: "Family", tags: ["multilingual", "family"], body: "My elder brother stopped his education so I could continue mine.\\nHe never complained about his decision.\\nInstead, he always encouraged me to study harder.\\nEvery achievement of mine belongs to him as much as it belongs to me." },
+      { title: "\\u0c2a\\u0c46\\u0c33\\u0c4d\\u0c32\\u0c3f \\u0c30\\u0c4b\\u0c1c\\u0c41", person: "Family", tags: ["multilingual", "marriage", "family"], body: "\\u0c2e\\u0c3e \\u0c2a\\u0c46\\u0c33\\u0c4d\\u0c32\\u0c3f \\u0c30\\u0c4b\\u0c1c\\u0c41\\u0c28 \\u0c0a\\u0c30\\u0c02\\u0c24\\u0c3e \\u0c12\\u0c15 \\u0c15\\u0c41\\u0c1f\\u0c41\\u0c02\\u0c2c\\u0c02\\u0c32\\u0c3e \\u0c2e\\u0c3e\\u0c30\\u0c3f\\u0c2a\\u0c4b\\u0c2f\\u0c3f\\u0c02\\u0c26\\u0c3f.\\n\\u0c2a\\u0c4d\\u0c30\\u0c24\\u0c3f \\u0c07\\u0c02\\u0c1f\\u0c3f \\u0c35\\u0c3e\\u0c30\\u0c41 \\u0c0f\\u0c26\\u0c4b \\u0c12\\u0c15 \\u0c2a\\u0c28\\u0c3f \\u0c1a\\u0c47\\u0c36\\u0c3e\\u0c30\\u0c41.\\n\\u0c0e\\u0c35\\u0c4d\\u0c35\\u0c30\\u0c42 \\u0c05\\u0c24\\u0c3f\\u0c25\\u0c41\\u0c32\\u0c4d\\u0c32\\u0c3e \\u0c05\\u0c28\\u0c3f\\u0c2a\\u0c3f\\u0c02\\u0c1a\\u0c32\\u0c47\\u0c26\\u0c41.\\n\\u0c06 \\u0c30\\u0c4b\\u0c1c\\u0c41 \\u0c2a\\u0c4d\\u0c30\\u0c47\\u0c2e \\u0c05\\u0c02\\u0c1f\\u0c47 \\u0c15\\u0c32\\u0c3f\\u0c38\\u0c3f \\u0c09\\u0c02\\u0c21\\u0c21\\u0c2e\\u0c47 \\u0c05\\u0c28\\u0c3f \\u0c05\\u0c30\\u0c4d\\u0c25\\u0c2e\\u0c48\\u0c02\\u0c26\\u0c3f." },
+      { title: "Flood Survival", person: "Family", tags: ["multilingual", "crisis", "community"], body: "Heavy rains flooded our village overnight.\\nMany families lost their homes and belongings.\\nYet everyone shared food, clothes, and shelter without hesitation.\\nThat difficult week showed us the true meaning of community." },
+      { title: "Festival Sweet Theft", person: "Family", tags: ["multilingual", "family", "festival"], body: "My sister and I secretly stole laddoos before the guests arrived.\\nGrandma pretended not to notice.\\nLater she quietly handed us two more sweets.\\nShe had planned for our mischief all along." }
+    ];
+
+    const storyLibrarySeed = storyWallCards2.map((story, index) => ({
       id: seedItems.length + index + 1,
       kind: 'memory',
       title: story.title,
@@ -615,13 +609,22 @@
       source: 'text',
       created_at: '2026-06-29T00:00:00.000Z',
       person: story.person,
-      language: (story.tags || []).find(t => String(t).startsWith('language:')) || 'language:en',
+      language: story.lang || 'Unknown',
       tags: [...new Set(['multilingual', 'story', ...(story.tags || [])])],
       metadata: { language: story.lang, featured: true }
     }));
-    const baseTags = ["all", "childhood", "place", "home", "migration", "timeline", "food", "recipe", "festival", "future", "capsule", "work", "story", "history", "wisdom", "song", "dialect", "music", "marriage", "family", "city", "rain", "language", "culture", "multilingual", "heritage"];
+    function getBaseTags(items) {
+      const tags = new Set();
+      (items || []).forEach(it => (it.tags || []).forEach(t => tags.add(String(t))));
+      // Remove internal/non-user tags.
+      tags.delete('multilingual');
+      tags.delete('story');
+      const ordered = Array.from(tags).filter(Boolean).sort((a, b) => a.localeCompare(b));
+      return ['all', ...ordered];
+    }
     let activeTag = "all";
-    let showAll = false;
+    let libraryPage = 0;
+    const PAGE_SIZE = 5;
 
     const demoState = {
       nextId: seedItems.length + 1,
@@ -715,10 +718,6 @@
       const filteredItemsRaw = activeTag === "all"
         ? items
         : items.filter(item => (item.tags || []).some(tag => String(tag).toLowerCase() === activeTag.toLowerCase()));
-
-      const filteredItems = (activeTag === "all" && !showAll)
-        ? filteredItemsRaw.slice(0, 12)
-        : filteredItemsRaw;
       const statsHost = document.getElementById('stats');
       const toolsHost = document.getElementById('tools');
       const timelineHost = document.getElementById('timeline');
@@ -755,29 +754,37 @@
       }
 
       if (filterHost) {
+        const baseTags = getBaseTags(items);
         filterHost.innerHTML = baseTags.map(tag => `
             <button type="button" class="filter-chip ${activeTag === tag ? 'active' : ''}" data-tag="${tag}">${tag}</button>
           `).join('');
         filterHost.querySelectorAll('[data-tag]').forEach(btn => {
           btn.addEventListener('click', () => {
             activeTag = btn.dataset.tag || 'all';
-            showAll = false;
+            libraryPage = 0;
             render();
           });
         });
       }
 
       if (libraryHost) {
-        const header = (activeTag === "all")
-          ? `<div class="tiny" style="margin-bottom:10px;">Showing ${filteredItems.length}${showAll ? '' : ` of ${filteredItemsRaw.length}`}</div>`
-          : `<div class="tiny" style="margin-bottom:10px;">Filtered by: <strong>${esc(activeTag)}</strong> (${filteredItemsRaw.length})</div>`;
+        const total = filteredItemsRaw.length;
+        const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+        const page = Math.min(libraryPage, totalPages - 1);
+        const start = page * PAGE_SIZE;
+        const end = start + PAGE_SIZE;
+        const pageItems = filteredItemsRaw.slice(start, end);
 
-        const toggle = (activeTag === "all" && filteredItemsRaw.length > 12)
-          ? `<button type="button" class="filter-chip ${showAll ? 'active' : ''}" id="toggleAllBtn">${showAll ? 'Show less' : 'Show all'}</button>`
-          : '';
+        const header = `<div class="tiny" style="margin-bottom:10px;">${activeTag === 'all' ? 'All memories' : `Tag: <strong>${esc(activeTag)}</strong>`} · Page ${page + 1}/${totalPages} · Showing ${pageItems.length} of ${total}</div>`;
+        const pager = `
+          <div class="toolbar" style="gap:10px; margin-bottom:10px;">
+            <button type="button" id="prevPageBtn" ${page <= 0 ? 'disabled' : ''}>Prev</button>
+            <button type="button" id="nextPageBtn" ${page >= totalPages - 1 ? 'disabled' : ''}>Next</button>
+          </div>
+        `;
 
-        const body = filteredItems.length
-          ? filteredItems.map(item => `
+        const body = pageItems.length
+          ? pageItems.map(item => `
             <div class="item">
               <div class="itemhead"><strong>${esc(item.title)}</strong><span class="tiny">${esc(item.kind)}</span></div>
               <div class="muted">${esc(item.content)}</div>
@@ -785,26 +792,23 @@
             </div>`).join('')
           : '<div class="muted">No memories match this tag filter.</div>';
 
-        libraryHost.innerHTML = `${header}${toggle ? `<div class="filterbar" style="margin-bottom:10px;">${toggle}</div>` : ''}${body}`;
+        libraryHost.innerHTML = `${header}${pager}${body}`;
 
-        const toggleBtn = document.getElementById('toggleAllBtn');
-        if (toggleBtn) {
-          toggleBtn.addEventListener('click', () => {
-            showAll = !showAll;
-            render();
-          });
-        }
+        const prevBtn = document.getElementById('prevPageBtn');
+        const nextBtn = document.getElementById('nextPageBtn');
+        if (prevBtn) prevBtn.addEventListener('click', () => { libraryPage = Math.max(0, page - 1); render(); });
+        if (nextBtn) nextBtn.addEventListener('click', () => { libraryPage = Math.min(totalPages - 1, page + 1); render(); });
       }
 
       if (storyHost) {
-        storyHost.innerHTML = storyWallCards.map(story => `
+        storyHost.innerHTML = storyWallCards2.map(story => `
             <article class="story-card">
               <div class="story-meta">
                 <span class="story-person">${esc(story.person)}</span>
-                <span class="story-lang">${esc(story.lang)}</span>
               </div>
               <h3>${esc(story.title)}</h3>
               <div class="story-body">${esc(story.body).replace(/\\n/g, '<br>')}</div>
+              <div class="tagrow" style="margin-top:10px;">${(story.tags || []).filter(t => t !== 'multilingual').slice(0, 4).map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
             </article>
           `).join('');
       }
