@@ -635,7 +635,12 @@
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return clone(demoState);
         const parsed = JSON.parse(raw);
-        if (!parsed.items) return clone(demoState);
+        if (!parsed.items || parsed.items.length === 0) return clone(demoState);
+        // Self-healing: if timeline is missing, inject default timeline events
+        if (!parsed.items.some(i => i.kind === 'timeline_event')) {
+          parsed.items = [...parsed.items, ...clone(demoState.items).filter(i => i.kind === 'timeline_event')];
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+        }
         return parsed;
       } catch {
         return clone(demoState);
