@@ -200,44 +200,21 @@
       color: var(--muted);
       line-height: 1.6;
     }
-    .timeline-rail {
-      position: relative;
-      padding-left: 26px;
+    .timeline-span {
+      grid-column: span 2;
     }
-    .timeline-rail::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 10px;
-      width: 2px;
-      background: linear-gradient(180deg, rgba(140,94,60,.55), rgba(199,139,90,.15));
+    @media (max-width: 900px) {
+      .timeline-span {
+        grid-column: span 1;
+      }
     }
-    .timeline-node {
-      position: relative;
-      margin-bottom: 14px;
-      padding: 16px 16px 16px 18px;
-      border-radius: 18px;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.76);
+    .timeline-node-dot {
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    .timeline-node::before {
-      content: "";
-      position: absolute;
-      left: -19px;
-      top: 20px;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      box-shadow: 0 0 0 5px rgba(140,94,60,.12);
-    }
-    .timeline-year {
-      font-size: 12px;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--accent);
-      font-weight: 700;
+    .timeline-node-dot:hover {
+      transform: scale(1.2);
+      border-color: var(--accent2) !important;
+      box-shadow: 0 0 14px rgba(199,139,90,0.6) !important;
     }
     .filterbar {
       display: flex;
@@ -381,43 +358,40 @@
     </details>
 
     <section class="grid">
-      <div class="card panel">
-        <div class="section-title">
-          <h2>Timeline</h2>
-          <div class="tiny">Chronological life events</div>
+      <div class="card panel timeline-span" style="position: relative; overflow: visible;">
+        <div class="section-title" style="margin-bottom: 8px;">
+          <div>
+            <h2 style="margin: 0; font-size: 24px; display: inline-flex; align-items: center; gap: 8px;">
+              Life Journey Timeline Graph
+            </h2>
+            <div class="tiny">Interactive node-link representation of family milestones</div>
+          </div>
+          <span class="version-badge" style="margin-top: 0; background: rgba(140, 94, 60, 0.08); font-size: 11px;">Interactive Map</span>
         </div>
-        <div class="timeline-rail" id="timeline">
-          <div class="timeline-node">
-            <div class="timeline-year">1965</div>
-            <strong>First school day</strong>
-            <div class="muted">A neighbor walked the child to school and reminded them to never forget their lunch box.</div>
+        <p class="section-copy" style="margin: 0 0 16px;">Hover nodes to preview, click to select, and scroll horizontally to travel through the generations.</p>
+        
+        <div id="timelineGraphContainer" style="position: relative; width: 100%; height: 380px; overflow-x: auto; overflow-y: hidden; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,0.45); backdrop-filter: blur(4px); margin-top: 10px; cursor: grab; user-select: none;">
+          <svg id="timelineSvg" style="position: absolute; top: 0; left: 0; min-width: 1400px; height: 100%; pointer-events: none; z-index: 1;"></svg>
+          <div id="timelineNodes" style="position: absolute; top: 0; left: 0; min-width: 1400px; height: 100%; z-index: 2;"></div>
+        </div>
+        
+        <!-- Node Detail popup -->
+        <div id="nodeDetailModal" class="card" style="display: none; position: absolute; bottom: 20px; right: 20px; width: 340px; padding: 18px; z-index: 10; background: rgba(255, 250, 242, 0.95); border: 1px solid var(--line); box-shadow: var(--shadow); backdrop-filter: blur(12px); border-radius: 20px; animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+            <div class="tiny" id="ndTrack" style="font-weight: 800; text-transform: uppercase; color: var(--accent); letter-spacing: 0.08em;">Track</div>
+            <span class="tag" id="ndYear" style="background: var(--accent); color: white; font-weight: 700; padding: 3px 8px;">1970</span>
           </div>
-          <div class="timeline-node">
-            <div class="timeline-year">1972</div>
-            <strong>Moved to Bengaluru</strong>
-            <div class="muted">The family left the village, took a shared bus, and stayed with relatives while looking for work.</div>
-          </div>
-          <div class="timeline-node">
-            <div class="timeline-year">1978</div>
-            <strong>Marriage</strong>
-            <div class="muted">The whole street helped cook, arrange flowers, and welcome guests into the family home.</div>
-          </div>
-          <div class="timeline-node">
-            <div class="timeline-year">1980</div>
-            <strong>First child</strong>
-            <div class="muted">Blankets, sweets, and names arrived from every relative who came to bless the newborn.</div>
-          </div>
-          <div class="timeline-node">
-            <div class="timeline-year">1992</div>
-            <strong>First business day</strong>
-            <div class="muted">A small shop became a place where every customer was greeted by name and every coin was counted carefully.</div>
-          </div>
+          <h3 id="ndTitle" style="margin: 8px 0 6px; font-size: 17px; font-weight: 800;">Node Title</h3>
+          <p class="muted" id="ndContent" style="margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink);">Node details go here...</p>
         </div>
       </div>
-      <div class="card panel">
+
+      <div class="card panel timeline-span" style="margin-top: 10px;">
         <div class="section-title">
-          <h2>Memory Library</h2>
-          <div class="tiny">All captured items</div>
+          <div>
+            <h2>Memory Library</h2>
+            <div class="tiny">All captured items</div>
+          </div>
         </div>
         <div class="list" id="library"></div>
       </div>
@@ -482,140 +456,120 @@
       "What was your first job like?"
     ];
 
-    const seedItems = [];
-
-    const storyWall = [
+    const seedItems = [
       {
-        title: "Grandma's Mango Pickle",
-        person: "Grandmother",
-        lang: "HI • TA • TE • KN • EN",
-        tags: ["multilingual", "food", "recipe", "family", "heritage"],
-        body: [
-          "Hindi: \"हर गर्मी दादी कहती थीं: 'आम का अचार सिर्फ रेसिपी नहीं, यादों का स्वाद है।'\"",
-          "Tamil: \"இதுல தான் குடும்பத்தின் ரகசியம் இருக்கு.\"",
-          "Telugu: \"మామిడి ఊరగాయ అంటే ఇంటి ప్రేమ.\"",
-          "Kannada: \"ಮಾವಿನ ಉಪ್ಪಿನಕಾಯಿ ಮನೆಯತನದ ನೆನಪು.\"",
-          "English: The whole house smelled of mustard oil, red chilli, and sunshine."
-        ].join("\\n")
+        kind: "timeline_event",
+        title: "Birth in Village",
+        content: "Born in a small house with clay walls and a thatch roof in a quiet village near the river.",
+        source: "text",
+        created_at: "2026-06-29T00:00:00+00:00",
+        person: "Grandparent",
+        tags: ["birth", "village", "timeline"],
+        metadata: { year: 1950, track: "Places" }
       },
       {
+        kind: "timeline_event",
         title: "First Day of School",
-        person: "Mother",
-        lang: "HI • TA • TE • KN • EN",
-        tags: ["multilingual", "school", "childhood", "family"],
-        body: [
-          "Hindi: \"मैं रोते हुए बोला: 'मम्मी घर जाना है।'\"",
-          "Tamil: \"பயப்படாதே, நீ நல்லா படிப்ப.\"",
-          "Telugu: \"భయపడకు.\"",
-          "Kannada: \"ನೀನು ಚೆನ್ನಾಗಿ ಮಾಡ್ತೀಯ.\"",
-          "English: By afternoon, I had already made my first friend."
-        ].join("\\n")
+        content: "Walked 3 miles to the local primary school. Cried on the first day but quickly grew to love the feel of slates and chalk.",
+        source: "text",
+        created_at: "2026-06-29T00:00:00+00:00",
+        person: "Grandparent",
+        tags: ["school", "childhood", "timeline"],
+        metadata: { year: 1956, track: "Milestones" }
       },
       {
-        title: "Train to a New Life",
-        person: "Father",
-        lang: "HI • TA • TE • EN",
-        tags: ["multilingual", "migration", "timeline", "city", "family"],
-        body: [
-          "Hindi: \"पापा बोले: 'यहीं से नई ज़िंदगी शुरू होगी।'\"",
-          "Tamil: \"இது நம்ம புதிய வாழ்க்கை.\"",
-          "Telugu: \"ఇది మన కొత్త ఆరంభం.\"",
-          "English: Our family boarded an overnight train to Bengaluru. The journey changed everything."
-        ].join("\\n")
+        kind: "timeline_event",
+        title: "Moved to Bengaluru",
+        content: "Moved from the village to Bengaluru in 1972 to look for work and stay with relatives.",
+        source: "text",
+        created_at: "2026-06-29T00:00:00+00:00",
+        person: "Grandparent",
+        tags: ["migration", "timeline"],
+        metadata: { year: 1972, track: "Places" }
       },
       {
-        title: "Village Festival",
-        person: "Aunt",
-        lang: "HI • TA • KN • EN",
-        tags: ["multilingual", "festival", "family", "culture"],
-        body: [
-          "Hindi: \"दीवाली में सब एक-दूसरे के घर जाते थे, मिठाई बाँटते थे।\"",
-          "Tamil: \"வாங்க சாப்பிடலாம்.\"",
-          "Kannada: \"ಹುಲಿಗೆ ಊಟ ಮಾಡಿದ್ರೆ ಸಂತೋಷ ಹೆಚ್ಚು.\"",
-          "English: Children ran everywhere with sparklers."
-        ].join("\\n")
+        kind: "timeline_event",
+        title: "First Job at Textile Shop",
+        content: "Learned to measure silk, handle customer bargaining, and manage storage inventory at a small market shop.",
+        source: "text",
+        created_at: "2026-06-29T00:00:00+00:00",
+        person: "Grandparent",
+        tags: ["work", "timeline"],
+        metadata: { year: 1975, track: "Career" }
       },
       {
-        title: "Grandpa's First Job",
-        person: "Grandfather",
-        lang: "HI • KN • EN",
-        tags: ["multilingual", "work", "timeline", "wisdom", "family"],
-        body: [
-          "Hindi: \"मेहनत कभी बेकार नहीं जाती।\"",
-          "Kannada: \"ಕೆಲಸ ಕಲಿಸಿದರೆ ಬದುಕು ಕಲಿಸುತ್ತದೆ.\"",
-          "English: Thatha worked in a tiny textile shop. Years later, he owned his own business."
-        ].join("\\n")
+        kind: "timeline_event",
+        title: "Marriage",
+        content: "Married in a ceremony where the whole street helped with cooking, flowers, and seating guests.",
+        source: "text",
+        created_at: "2026-06-29T00:00:00+00:00",
+        person: "Grandparent",
+        tags: ["marriage", "timeline", "family"],
+        metadata: { year: 1978, track: "Milestones" }
       },
       {
-        title: "Parents' Marriage",
-        person: "Parents",
-        lang: "TA • TE • EN",
-        tags: ["multilingual", "marriage", "family", "timeline", "story"],
-        body: [
-          "Tamil: \"அப்போ காதல் இல்ல, நம்பிக்கை இருந்தது.\"",
-          "Telugu: \"పెళ్లి తర్వాతే ప్రేమ మొదలైంది.\"",
-          "English: They met only two days before the wedding. Today they still laugh together."
-        ].join("\\n")
+        kind: "timeline_event",
+        title: "First Child Born",
+        content: "A healthy baby girl was born. The whole neighborhood came to celebrate and sing traditional blessings.",
+        source: "text",
+        created_at: "2026-06-29T00:00:00+00:00",
+        person: "Grandparent",
+        tags: ["child", "family", "timeline"],
+        metadata: { year: 1980, track: "Milestones" }
       },
-      { title: "College Road Trip", person: "Friends", lang: "Multilingual", tags: ["multilingual", "travel", "youth"], body: `Five friends squeezed into one small car and drove to Coorg.\nWe still remember the rain more than the destination.` },
-      { title: "Flood Survival", person: "Family", lang: "Multilingual", tags: ["multilingual", "crisis", "kindness", "village"], body: `Our village flooded overnight.\nNeighbors shared food without asking.\nThat disaster taught us kindness.` },
-      { title: "Sunday Biryani", person: "Father", lang: "Multilingual", tags: ["multilingual", "food", "family"], body: `Every Sunday Appa made biryani.\nThe aroma filled the entire house before lunch.` },
-      { title: "Learning Bicycle", person: "Father", lang: "Multilingual", tags: ["multilingual", "childhood", "learning"], body: `Papa ran behind my bicycle shouting "Brake dabao!"\nFinally I rode without support.` },
-      { title: "Bedtime Stories", person: "Grandmother", lang: "Multilingual", tags: ["multilingual", "childhood", "stories"], body: `Every night Paati narrated stories about kings, birds and rivers.\nEven today those stories feel more real than movies.` },
-      { title: "Leaving the Village", person: "Mother", lang: "Multilingual", tags: ["multilingual", "migration", "timeline"], body: `We packed everything into two bags and moved to Bengaluru.\nThe city gave us opportunities our village never could.` },
-      { title: "Brother's Sacrifice", person: "Brother", lang: "Multilingual", tags: ["multilingual", "family", "sacrifice"], body: `My elder brother left college so I could continue mine.\nI still believe my degree belongs to both of us.` },
-      { title: "Gully Cricket", person: "Neighborhood", lang: "Multilingual", tags: ["multilingual", "childhood", "community"], body: `The street became our stadium every evening.\nUncle shouted but later joined the match himself.` },
-      { title: "First Salary", person: "Self", lang: "Multilingual", tags: ["multilingual", "work", "family"], body: `When I received my first salary, I bought a saree for Maa.\nThat smile was worth more than the money.` },
-      { title: "Temple Festival", person: "Community", lang: "Multilingual", tags: ["multilingual", "festival", "community"], body: `Nadaswaram echoed through the streets.\nTelugu, Kannada, Tamil, Hindi: it truly felt like one family.` },
-      { title: "Losing Our Old House", person: "Family", lang: "Multilingual", tags: ["multilingual", "home", "memory"], body: `Our ancestral house was demolished after eighty years.\nWe collected one old brick to remember home.` },
-      { title: "Community Wedding", person: "Street", lang: "Multilingual", tags: ["multilingual", "community", "family"], body: `The whole street cooked together.\nEveryone became family for one day.` },
-      { title: "Best Teacher", person: "Teacher", lang: "Multilingual", tags: ["multilingual", "school", "career"], body: `My science teacher believed in me when nobody else did.\nThat advice shaped my career.` },
-      { title: "Cooking During Power Cuts", person: "Family", lang: "Multilingual", tags: ["multilingual", "family", "food"], body: `Electricity disappeared almost every evening.\nWe cooked under lantern light while cousins sang old songs.` },
-      { title: "First Flight", person: "Mother", lang: "Multilingual", tags: ["multilingual", "travel", "milestone"], body: `When the airplane took off, Amma tightly held my hand.\nWe all looked outside like little children.` },
-      { title: "Lockdown Memories", person: "Family", lang: "Multilingual", tags: ["multilingual", "family", "together"], body: `During lockdown we finally had dinner together every night.\nFamily became closer.` },
-      { title: "Saving Grandma's Recipe Book", person: "Family", lang: "Multilingual", tags: ["multilingual", "food", "heritage"], body: `Old notebooks were getting damaged by rain.\nWe scanned every page: four generations of memories.` },
-      { title: "Daughter's Wedding Farewell", person: "Family", lang: "Multilingual", tags: ["multilingual", "marriage", "family"], body: `Vidai was harder than anyone expected.\nTears, smiles and blessings mixed together.` },
-      { title: "Kindness During Crisis", person: "Strangers", lang: "Multilingual", tags: ["multilingual", "kindness", "crisis"], body: `Strangers gave us food when our bus broke down.\nWe never forgot their kindness.` },
-      { title: "Banyan Tree", person: "Community", lang: "Multilingual", tags: ["multilingual", "place", "community"], body: `The old banyan tree was our meeting place for decades.\nFestivals, arguments, celebrations and stories began under its shade.` },
-      { title: "Farming Lessons", person: "Grandfather", lang: "Multilingual", tags: ["multilingual", "wisdom", "work"], body: `Grandpa said: "Farming teaches patience better than any school."\nEvery seed reminded us that good things take time.` },
-      { title: "Festival Sweet Theft", person: "Siblings", lang: "Multilingual", tags: ["multilingual", "festival", "family"], body: `We secretly stole laddoos before Diwali guests arrived.\nGrandma pretended not to notice.` },
-      { title: "Graduation Day", person: "Friends", lang: "Multilingual", tags: ["multilingual", "milestone", "youth"], body: `College ended with laughter, hugs and silent tears.\nLife had different plans.` },
-      { title: "Message for Future Grandchildren", person: "Grandparent", lang: "Multilingual", tags: ["multilingual", "heritage", "wisdom", "capsule"], body: `If you are reading this many years from now, remember where your family came from.\nSpeak your mother tongue, cook together, visit your grandparents, and never let these stories disappear.` }
+      {
+        kind: "timeline_event",
+        title: "Starting the Shop",
+        content: "Rented a tiny corner store to sell grains and spices. Worked long hours to establish the family business.",
+        source: "text",
+        created_at: "2026-06-29T00:00:00+00:00",
+        person: "Grandparent",
+        tags: ["business", "work", "timeline"],
+        metadata: { year: 1985, track: "Career" }
+      },
+      {
+        kind: "timeline_event",
+        title: "Buying the Courtyard House",
+        content: "Finally bought our own home with a beautiful mango tree in the backyard and a tin roof.",
+        source: "text",
+        created_at: "2026-06-29T00:00:00+00:00",
+        person: "Grandparent",
+        tags: ["home", "timeline"],
+        metadata: { year: 1992, track: "Places" }
+      },
+      {
+        kind: "timeline_event",
+        title: "First Grandchild Born",
+        content: "Welcomed the next generation into our lives. Holding them reminded us how beautifully the threads of time weave together.",
+        source: "text",
+        created_at: "2026-06-29T00:00:00+00:00",
+        person: "Grandparent",
+        tags: ["grandchild", "family", "timeline"],
+        metadata: { year: 2005, track: "Milestones" }
+      },
+      {
+        kind: "recipe",
+        title: "Festival sweet",
+        content: "Take semolina, ghee, sugar, and cardamom. Roast slowly and finish with cashews.",
+        source: "voice",
+        created_at: "2026-06-29T00:00:00+00:00",
+        person: "Grandparent",
+        tags: ["food", "recipe"],
+        metadata: { occasion: "festival" }
+      },
+      {
+        kind: "capsule",
+        title: "For your wedding day",
+        content: "Keep your family close and remember that love is built in small daily choices.",
+        source: "voice",
+        created_at: "2026-06-29T00:00:00+00:00",
+        person: "Grandparent",
+        tags: ["future", "capsule"],
+        metadata: { unlock_date: "2035-01-01" }
+      }
     ];
 
-    // Use an ASCII-safe, single-language wall so stories are multilingual across cards (not mixed inside one card).
-    const storyWallCards = [
-      { title: "Grandma's Mango Pickle", person: "Grandmother", lang: "Hindi", tags: ["multilingual", "language:hi", "family", "food", "heritage"], body: "\u0939\u0930 \u0917\u0930\u094d\u092e\u0940 \u0926\u093e\u0926\u0940 \u0915\u0939\u0924\u0940 \u0925\u0940\u0902: '\u0906\u092e \u0915\u093e \u0905\u091a\u093e\u0930 \u0938\u093f\u0930\u094d\u092b \u0930\u0947\u0938\u093f\u092a\u0940 \u0928\u0939\u0940\u0902, \u092f\u093e\u0926\u094b\u0902 \u0915\u093e \u0938\u094d\u0935\u093e\u0926 \u0939\u0948\u0964'" },
-      { title: "Mango Pickle Secret", person: "Grandmother", lang: "Tamil", tags: ["multilingual", "language:ta", "food", "heritage"], body: "\u0b87\u0ba4\u0bc1\u0bb2 \u0ba4\u0bbe\u0ba9\u0bcd \u0b95\u0bc1\u0b9f\u0bc1\u0bae\u0bcd\u0baa\u0ba4\u0bcd\u0ba4\u0bbf\u0ba9\u0bcd \u0bb0\u0b95\u0b9a\u0bbf\u0baf\u0bae\u0bcd \u0b87\u0bb0\u0bc1\u0b95\u0bcd\u0b95\u0bc1." },
-      { title: "Home Love", person: "Grandmother", lang: "Telugu", tags: ["multilingual", "language:te", "family", "heritage"], body: "\u0c2e\u0c3e\u0c2e\u0c3f\u0c21\u0c3f \u0c0a\u0c30\u0c17\u0c3e\u0c2f \u0c05\u0c02\u0c1f\u0c47 \u0c07\u0c02\u0c1f\u0c3f \u0c2a\u0c4d\u0c30\u0c47\u0c2e." },
-      { title: "Pickle Memory", person: "Grandmother", lang: "Kannada", tags: ["multilingual", "language:kn", "family", "heritage"], body: "\u0cae\u0cbe\u0cb5\u0cbf\u0ca8 \u0c89\u0caa\u0ccd\u0caa\u0cbf\u0ca8\u0c95\u0cbe\u0caf\u0cbf \u0cae\u0ca8\u0cc6\u0caf\u0ca4\u0ca8\u0ca6 \u0ca8\u0cc6\u0ca8\u0caa\u0cc1." },
-
-      { title: "First Day of School", person: "Mother", lang: "Hindi", tags: ["multilingual", "language:hi", "childhood", "school"], body: "\u092e\u0948\u0902 \u0930\u094b\u0924\u0947 \u0939\u0941\u090f \u092c\u094b\u0932\u093e: '\u092e\u092e\u094d\u092e\u0940 \u0918\u0930 \u091c\u093e\u0928\u093e \u0939\u0948\u0964'" },
-      { title: "First Day of School", person: "Mother", lang: "Tamil", tags: ["multilingual", "language:ta", "childhood", "school"], body: "\u0baa\u0baf\u0baa\u0bcd\u0baa\u0b9f\u0bbe\u0ba4\u0bc7, \u0ba8\u0bc0 \u0ba8\u0bb2\u0bcd\u0bb2\u0bbe \u0baa\u0b9f\u0bbf\u0baa\u0bcd\u0baa\u0bc1." },
-      { title: "First Day of School", person: "Mother", lang: "Telugu", tags: ["multilingual", "language:te", "childhood", "school"], body: "\u0c2d\u0c2f\u0c2a\u0c21\u0c15\u0c41." },
-      { title: "First Day of School", person: "Teacher", lang: "Kannada", tags: ["multilingual", "language:kn", "childhood", "school"], body: "\u0ca8\u0cc0\u0ca8\u0cc1 \u0c9a\u0cc6\u0ca8\u0ccd\u0ca8\u0cbe\u0c97\u0cbf \u0cae\u0cbe\u0ca1\u0ccd\u0ca4\u0cc0\u0caf." },
-
-      { title: "Train to a New Life", person: "Father", lang: "Hindi", tags: ["multilingual", "language:hi", "migration", "timeline"], body: "\u092f\u0939\u0940\u0902 \u0938\u0947 \u0928\u0908 \u091c\u093f\u0902\u0926\u0917\u0940 \u0936\u0941\u0930\u0942 \u0939\u094b\u0917\u0940\u0964" },
-      { title: "Train to a New Life", person: "Father", lang: "Tamil", tags: ["multilingual", "language:ta", "migration", "timeline"], body: "\u0b87\u0ba4\u0bc1 \u0ba8\u0bae\u0bcd\u0bae \u0baa\u0bc1\u0ba4\u0bbf\u0baf \u0bb5\u0bbe\u0bb4\u0bcd\u0b95\u0bcd\u0b95\u0bc8." },
-      { title: "Train to a New Life", person: "Father", lang: "Telugu", tags: ["multilingual", "language:te", "migration", "timeline"], body: "\u0c07\u0c26\u0c3f \u0c2e\u0c28 \u0c15\u0c4a\u0c24\u0c4d\u0c24 \u0c06\u0c30\u0c02\u0c2d\u0c02." },
-
-      { title: "Village Festival", person: "Aunt", lang: "Hindi", tags: ["multilingual", "language:hi", "festival", "culture"], body: "\u0926\u0940\u0935\u093e\u0932\u0940 \u092e\u0947\u0902 \u0938\u092c \u090f\u0915-\u0926\u0942\u0938\u0930\u0947 \u0915\u0947 \u0918\u0930 \u091c\u093e\u0924\u0947 \u0925\u0947\u0964" },
-      { title: "Village Festival", person: "Aunt", lang: "Tamil", tags: ["multilingual", "language:ta", "festival"], body: "\u0bb5\u0bbe\u0b99\u0bcd\u0b95 \u0b9a\u0bbe\u0baa\u0bcd\u0baa\u0bbf\u0b9f\u0bb2\u0bbe\u0bae\u0bcd." },
-      { title: "Village Festival", person: "Aunt", lang: "Kannada", tags: ["multilingual", "language:kn", "festival"], body: "\u0cb9\u0cca\u0cb3\u0cbf\u0c97\u0cc6 \u0c8a\u0c9f \u0cae\u0cbe\u0ca1\u0cbf\u0ca6\u0ccd\u0cb0\u0cc6 \u0cb8\u0c82\u0ca4\u0ccb\u0cb7 \u0cb9\u0cc6\u0c9a\u0ccd\u0c9a\u0cc1." }
-    ];
-
-    // Replace earlier demo content with user-provided stories (one language per story).
     const storyWallCards2 = [
-      { title: "\\u0cae\\u0cca\\u0ca6\\u0cb2 \\u0cb8\\u0c82\\u0cac\\u0cb3", person: "Family", tags: ["multilingual", "work", "family"], body: "\\u0ca8\\u0ca8\\u0ccd\\u0ca8 \\u0cae\\u0cca\\u0ca6\\u0cb2 \\u0cb8\\u0c82\\u0cac\\u0cb3 \\u0cac\\u0c82\\u0ca6 \\u0ca6\\u0cbf\\u0ca8 \\u0c85\\u0cae\\u0ccd\\u0cae\\u0ca8\\u0cbf\\u0c97\\u0cc6 \\u0c92\\u0c82\\u0ca6\\u0cc1 \\u0cb8\\u0cc0\\u0cb0\\u0cc6 \\u0ca4\\u0c82\\u0ca6\\u0cc6.\\n\\u0c85\\u0cb5\\u0cb0\\u0cc1 \\u0c85\\u0ca6\\u0ca8\\u0ccd\\u0ca8\\u0cc1 \\u0ca8\\u0ccb\\u0ca1\\u0cbf\\u0ca6 \\u0c95\\u0cc2\\u0ca1\\u0cb2\\u0cc7 \\u0c95\\u0ca3\\u0ccd\\u0ca3\\u0cb2\\u0ccd\\u0cb2\\u0cbf \\u0ca8\\u0cc0\\u0cb0\\u0cc1 \\u0ca4\\u0cc1\\u0c82\\u0cac\\u0cbf\\u0ca4\\u0cc1.\\n**\\\"\\u0c87\\u0ca6\\u0c95\\u0ccd\\u0c95\\u0cbf\\u0c82\\u0ca4 \\u0ca6\\u0cca\\u0ca1\\u0ccd\\u0ca1 \\u0c89\\u0ca1\\u0cc1\\u0c97\\u0cca\\u0cb0\\u0cc6 \\u0cac\\u0cc7\\u0ca1,\\\"** \\u0c8e\\u0c82\\u0ca6\\u0cc1 \\u0cb9\\u0cc7\\u0cb3\\u0cbf\\u0ca6\\u0cb0\\u0cc1.\\n\\u0c86 \\u0ca6\\u0cbf\\u0ca8 \\u0cb9\\u0ca3\\u0c95\\u0ccd\\u0c95\\u0cbf\\u0c82\\u0ca4 \\u0c85\\u0cb5\\u0cb0 \\u0ca8\\u0c97\\u0cc1 \\u0ca8\\u0ca8\\u0c97\\u0cc6 \\u0cb9\\u0cc6\\u0c9a\\u0ccd\\u0c9a\\u0cc1 \\u0cac\\u0cc6\\u0cb2\\u0cc6\\u0cac\\u0cbe\\u0cb3\\u0cbf\\u0ca4\\u0cc1." },
-      { title: "Grandmother's Mango Pickle", person: "Family", tags: ["multilingual", "food", "tradition"], body: "Every summer, Grandma would wake before sunrise to prepare mango pickle.\\nShe insisted that every jar should be mixed slowly and patiently.\\nThe whole house smelled of mustard oil, spices, and sunshine.\\nEven today, one bite brings back memories of childhood vacations." },
-      { title: "\\u0b95\\u0bcb\\u0bb5\\u0bbf\\u0bb2\\u0bcd \\u0ba4\\u0bbf\\u0bb0\\u0bc1\\u0bb5\\u0bbf\\u0bb4\\u0bbe", person: "Family", tags: ["multilingual", "festival"], body: "\\u0b95\\u0bcb\\u0bb5\\u0bbf\\u0bb2\\u0bcd \\u0ba4\\u0bbf\\u0bb0\\u0bc1\\u0bb5\\u0bbf\\u0bb4\\u0bbe \\u0bb5\\u0ba8\\u0bcd\\u0ba4\\u0bbe\\u0bb2\\u0bcd \\u0b95\\u0bbf\\u0bb0\\u0bbe\\u0bae\\u0bae\\u0bc7 \\u0bb5\\u0bbf\\u0bb4\\u0bbf\\u0ba4\\u0bcd\\u0ba4\\u0bc1\\u0b95\\u0bcd \\u0b95\\u0bca\\u0bb3\\u0bcd\\u0bb5\\u0ba4\\u0bc1 \\u0baa\\u0bcb\\u0bb2 \\u0b87\\u0bb0\\u0bc1\\u0b95\\u0bcd\\u0b95\\u0bc1\\u0bae\\u0bcd.\\n\\u0ba8\\u0bbe\\u0ba4\\u0bb8\\u0bcd\\u0bb5\\u0bb0\\u0bae\\u0bcd, \\u0ba4\\u0bc0\\u0baa\\u0b99\\u0bcd\\u0b95\\u0bb3\\u0bcd, \\u0bae\\u0bb2\\u0bb0\\u0bcd \\u0b85\\u0bb2\\u0b99\\u0bcd\\u0b95\\u0bbe\\u0bb0\\u0bae\\u0bcd \\u0b8e\\u0b99\\u0bcd\\u0b95\\u0bc1\\u0bae\\u0bcd \\u0b95\\u0bbe\\u0ba3\\u0baa\\u0bcd\\u0baa\\u0b9f\\u0bc1\\u0bae\\u0bcd.\\n\\u0b8e\\u0bb2\\u0bcd\\u0bb2\\u0bcb\\u0bb0\\u0bc1\\u0bae\\u0bcd \\u0b9a\\u0bc7\\u0bb0\\u0bcd\\u0ba8\\u0bcd\\u0ba4\\u0bc1 \\u0b89\\u0ba3\\u0bb5\\u0bc1 \\u0b89\\u0ba3\\u0bcd\\u0b9f\\u0bc1 \\u0bae\\u0b95\\u0bbf\\u0bb4\\u0bcd\\u0b9a\\u0bcd\\u0b9a\\u0bbf\\u0baf\\u0bbe\\u0b95 \\u0b95\\u0bca\\u0ba3\\u0bcd\\u0b9f\\u0bbe\\u0b9f\\u0bc1\\u0bb5\\u0bcb\\u0bae\\u0bcd.\\n\\u0b85\\u0ba8\\u0bcd\\u0ba4 \\u0ba8\\u0bbe\\u0b9f\\u0bcd\\u0b95\\u0bb3\\u0bcd \\u0b87\\u0ba9\\u0bcd\\u0ba9\\u0bc1\\u0bae\\u0bcd \\u0bae\\u0ba9\\u0ba4\\u0bbf\\u0bb2\\u0bcd \\u0bb5\\u0bbe\\u0bb4\\u0bcd\\u0b95\\u0bbf\\u0ba9\\u0bcd\\u0bb1\\u0ba9." },
-      { title: "Brother's Sacrifice", person: "Family", tags: ["multilingual", "family"], body: "My elder brother stopped his education so I could continue mine.\\nHe never complained about his decision.\\nInstead, he always encouraged me to study harder.\\nEvery achievement of mine belongs to him as much as it belongs to me." },
-      { title: "\\u0c2a\\u0c46\\u0c33\\u0c4d\\u0c32\\u0c3f \\u0c30\\u0c4b\\u0c1c\\u0c41", person: "Family", tags: ["multilingual", "marriage", "family"], body: "\\u0c2e\\u0c3e \\u0c2a\\u0c46\\u0c33\\u0c4d\\u0c32\\u0c3f \\u0c30\\u0c4b\\u0c1c\\u0c41\\u0c28 \\u0c0a\\u0c30\\u0c02\\u0c24\\u0c3e \\u0c12\\u0c15 \\u0c15\\u0c41\\u0c1f\\u0c41\\u0c02\\u0c2c\\u0c02\\u0c32\\u0c3e \\u0c2e\\u0c3e\\u0c30\\u0c3f\\u0c2a\\u0c4b\\u0c2f\\u0c3f\\u0c02\\u0c26\\u0c3f.\\n\\u0c2a\\u0c4d\\u0c30\\u0c24\\u0c3f \\u0c07\\u0c02\\u0c1f\\u0c3f \\u0c35\\u0c3e\\u0c30\\u0c41 \\u0c0f\\u0c26\\u0c4b \\u0c12\\u0c15 \\u0c2a\\u0c28\\u0c3f \\u0c1a\\u0c47\\u0c36\\u0c3e\\u0c30\\u0c41.\\n\\u0c0e\\u0c35\\u0c4d\\u0c35\\u0c30\\u0c42 \\u0c05\\u0c24\\u0c3f\\u0c25\\u0c41\\u0c32\\u0c4d\\u0c32\\u0c3e \\u0c05\\u0c28\\u0c3f\\u0c2a\\u0c3f\\u0c02\\u0c1a\\u0c32\\u0c47\\u0c26\\u0c41.\\n\\u0c06 \\u0c30\\u0c4b\\u0c1c\\u0c41 \\u0c2a\\u0c4d\\u0c30\\u0c47\\u0c2e \\u0c05\\u0c02\\u0c1f\\u0c47 \\u0c15\\u0c32\\u0c3f\\u0c38\\u0c3f \\u0c09\\u0c02\\u0c21\\u0c21\\u0c2e\\u0c47 \\u0c05\\u0c28\\u0c3f \\u0c05\\u0c30\\u0c4d\\u0c25\\u0c2e\\u0c48\\u0c02\\u0c26\\u0c3f." },
-      { title: "Flood Survival", person: "Family", tags: ["multilingual", "crisis", "community"], body: "Heavy rains flooded our village overnight.\\nMany families lost their homes and belongings.\\nYet everyone shared food, clothes, and shelter without hesitation.\\nThat difficult week showed us the true meaning of community." },
-      { title: "Festival Sweet Theft", person: "Family", tags: ["multilingual", "family", "festival"], body: "My sister and I secretly stole laddoos before the guests arrived.\\nGrandma pretended not to notice.\\nLater she quietly handed us two more sweets.\\nShe had planned for our mischief all along." }
-    ];
-
-    const storyLibrarySeed = storyWallCards2.map((story, index) => ({
       id: seedItems.length + index + 1,
       kind: 'memory',
       title: story.title,
@@ -758,14 +712,218 @@
         `;
       }
 
-      if (timelineHost) {
-        timelineHost.innerHTML = timeline.length
-          ? timeline.map(item => `
-            <div class="item">
-              <div class="itemhead"><strong>${esc(item.title)}</strong><span class="tiny">${fmt(item.created_at)}</span></div>
-              <div class="muted">${esc(item.content)}</div>
-            </div>`).join('')
-          : '<div class="muted">No timeline events yet.</div>';
+      const svg = document.getElementById('timelineSvg');
+      const nodesHost = document.getElementById('timelineNodes');
+      const detailModal = document.getElementById('nodeDetailModal');
+      const graphContainer = document.getElementById('timelineGraphContainer');
+
+      if (svg && nodesHost) {
+        nodesHost.innerHTML = '';
+        svg.innerHTML = '';
+
+        if (!timeline.length) {
+          nodesHost.innerHTML = '<div class="muted" style="padding: 24px; text-align: center;">No timeline events found. Add some using the compose button!</div>';
+        } else {
+          // Sort events chronologically by year
+          const events = timeline.map(item => {
+            const year = item.metadata && item.metadata.year ? parseInt(item.metadata.year) : 1970;
+            const track = item.metadata && item.metadata.track ? item.metadata.track : 'Milestones';
+            return { ...item, year, track };
+          }).sort((a, b) => a.year - b.year);
+
+          // Define tracks/lanes vertically
+          const tracks = {
+            'Places': 75,
+            'Milestones': 190,
+            'Career': 305
+          };
+
+          // Render track lines/lanes in background
+          Object.entries(tracks).forEach(([name, y]) => {
+            const lane = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            lane.setAttribute("x1", "0");
+            lane.setAttribute("y1", y);
+            lane.setAttribute("x2", "2000");
+            lane.setAttribute("y2", y);
+            lane.setAttribute("stroke", "rgba(140,94,60,0.15)");
+            lane.setAttribute("stroke-width", "2");
+            lane.setAttribute("stroke-dasharray", "6 6");
+            svg.appendChild(lane);
+
+            const label = document.createElement('div');
+            label.style.position = 'absolute';
+            label.style.left = '20px';
+            label.style.top = `${y - 12}px`;
+            label.style.fontSize = '10px';
+            label.style.fontWeight = '800';
+            label.style.letterSpacing = '0.12em';
+            label.style.color = 'var(--accent)';
+            label.style.textTransform = 'uppercase';
+            label.style.opacity = '0.65';
+            label.textContent = name;
+            nodesHost.appendChild(label);
+          });
+
+          // Calculate node spacing horizontally
+          const startX = 150;
+          const spacingX = 180;
+          const nodeCoords = [];
+
+          events.forEach((event, idx) => {
+            const x = startX + idx * spacingX;
+            const y = tracks[event.track] || 190;
+            nodeCoords.push({ x, y, event });
+          });
+
+          // Adjust container and SVG width to fit all nodes
+          const minWidth = Math.max(1200, startX + events.length * spacingX + 100);
+          svg.style.minWidth = `${minWidth}px`;
+          nodesHost.style.minWidth = `${minWidth}px`;
+
+          // Draw connection path lines
+          for (let i = 0; i < nodeCoords.length - 1; i++) {
+            const p1 = nodeCoords[i];
+            const p2 = nodeCoords[i+1];
+
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            const cp1x = p1.x + 80;
+            const cp1y = p1.y;
+            const cp2x = p2.x - 80;
+            const cp2y = p2.y;
+            path.setAttribute("d", `M ${p1.x} ${p1.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`);
+            path.setAttribute("stroke", "url(#lineGrad)");
+            path.setAttribute("stroke-width", "4");
+            path.setAttribute("fill", "none");
+            path.setAttribute("stroke-linecap", "round");
+            svg.appendChild(path);
+          }
+
+          // Add gradient definitions to SVG
+          const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+          defs.innerHTML = `
+            <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.9" />
+              <stop offset="100%" stop-color="var(--accent2)" stop-opacity="0.9" />
+            </linearGradient>
+          `;
+          svg.appendChild(defs);
+
+          // Draw node elements
+          nodeCoords.forEach((node, idx) => {
+            const dot = document.createElement('div');
+            dot.className = 'timeline-node-dot';
+            dot.style.position = 'absolute';
+            dot.style.left = `${node.x - 22}px`;
+            dot.style.top = `${node.y - 22}px`;
+            dot.style.width = '44px';
+            dot.style.height = '44px';
+            dot.style.borderRadius = '50%';
+            dot.style.background = 'linear-gradient(135deg, #ffffff, var(--panel))';
+            dot.style.border = '4px solid var(--accent)';
+            dot.style.boxShadow = '0 8px 20px rgba(140,94,60,0.22)';
+            dot.style.cursor = 'pointer';
+            dot.style.display = 'flex';
+            dot.style.alignItems = 'center';
+            dot.style.justifyContent = 'center';
+            dot.style.zIndex = '5';
+
+            // Year text inside
+            const yr = document.createElement('span');
+            yr.style.fontSize = '12px';
+            yr.style.fontWeight = '800';
+            yr.style.color = 'var(--ink)';
+            yr.textContent = node.event.year;
+            dot.appendChild(yr);
+
+            // Title label
+            const titleLbl = document.createElement('div');
+            titleLbl.style.position = 'absolute';
+            titleLbl.style.width = '160px';
+            titleLbl.style.left = '-58px';
+            const isCareer = node.event.track === 'Career';
+            titleLbl.style.top = isCareer ? '-28px' : '48px';
+            titleLbl.style.textAlign = 'center';
+            titleLbl.style.fontSize = '12px';
+            titleLbl.style.fontWeight = '800';
+            titleLbl.style.color = 'var(--ink)';
+            titleLbl.style.whiteSpace = 'nowrap';
+            titleLbl.style.overflow = 'hidden';
+            titleLbl.style.textOverflow = 'ellipsis';
+            titleLbl.textContent = node.event.title;
+            dot.appendChild(titleLbl);
+
+            // Mouse enter/leave visuals (CSS handles scale, we handle color highlight here)
+            dot.addEventListener('mouseenter', () => {
+              dot.style.borderColor = 'var(--accent2)';
+            });
+            dot.addEventListener('mouseleave', () => {
+              dot.style.borderColor = 'var(--accent)';
+            });
+
+            // Click interaction
+            dot.addEventListener('click', (e) => {
+              e.stopPropagation();
+
+              document.querySelectorAll('.timeline-node-dot').forEach(d => {
+                d.style.outline = 'none';
+              });
+              dot.style.outline = '4px solid var(--accent2)';
+              dot.style.outlineOffset = '2px';
+
+              // Populate details panel
+              const detailTitle = document.getElementById('ndTitle');
+              const detailYear = document.getElementById('ndYear');
+              const detailTrack = document.getElementById('ndTrack');
+              const detailContent = document.getElementById('ndContent');
+
+              if (detailTitle) detailTitle.textContent = node.event.title;
+              if (detailYear) detailYear.textContent = node.event.year;
+              if (detailTrack) detailTrack.textContent = node.event.track;
+              if (detailContent) detailContent.textContent = node.event.content;
+
+              if (detailModal) {
+                detailModal.style.display = 'block';
+              }
+            });
+
+            nodesHost.appendChild(dot);
+          });
+
+          // Setup drag-to-scroll on the graph container
+          let isDown = false;
+          let startPageX;
+          let scrollLeft;
+
+          graphContainer.addEventListener('mousedown', (e) => {
+            isDown = true;
+            graphContainer.style.cursor = 'grabbing';
+            startPageX = e.pageX - graphContainer.offsetLeft;
+            scrollLeft = graphContainer.scrollLeft;
+          });
+          graphContainer.addEventListener('mouseleave', () => {
+            isDown = false;
+            graphContainer.style.cursor = 'grab';
+          });
+          graphContainer.addEventListener('mouseup', () => {
+            isDown = false;
+            graphContainer.style.cursor = 'grab';
+          });
+          graphContainer.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - graphContainer.offsetLeft;
+            const walk = (x - startPageX) * 1.5;
+            graphContainer.scrollLeft = scrollLeft - walk;
+          });
+
+          // Close modal when clicking empty graph space
+          graphContainer.addEventListener('click', () => {
+            if (detailModal) detailModal.style.display = 'none';
+            document.querySelectorAll('.timeline-node-dot').forEach(d => {
+              d.style.outline = 'none';
+            });
+          });
+        }
       }
 
       if (filterHost) {
