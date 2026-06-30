@@ -568,12 +568,25 @@
         metadata: { unlock_date: "2035-01-01" }
       }
     ];
-
     const storyWallCards2 = [
+      { title: "ಮೊದಲ ಸಂಬಳ (First Salary)", person: "Family", lang: "Kannada", tags: ["kannada", "language:kn", "work", "family"], body: "ನನ್ನ ಮೊದಲ ಸಂಬಳ ಬಂದ ದಿನ ಅಮ್ಮನಿಗೆ ಒಂದು ಸೀರೆ ತಂದೆ. ಅವರು ಅದನ್ನು ನೋಡಿ ಕಣ್ಣಿನಲ್ಲಿ ನೀರು ತುಂಬಿಕೊಂಡರು. 'ಇದಕ್ಕಿಂತ ದೊಡ್ಡ ಉಡುಗೊರೆ ಬೇಡ,' ಎಂದರು." },
+      { title: "Grandmother's Mango Pickle", person: "Family", lang: "English", tags: ["english", "language:en", "food", "heritage"], body: "Every summer, Grandma would prepare mango pickle. She insisted that every jar should be mixed slowly and patiently. The whole house smelled of mustard oil, spices, and sunshine." },
+      { title: "கோவில் திருவிழா (Temple Festival)", person: "Family", lang: "Tamil", tags: ["tamil", "language:ta", "festival", "community"], body: "கோவில் திருவிழா வந்தால் கிராமமே விழித்துக் கொள்வது போல இருக்கும். நாதஸ்வரம், தீபங்கள், மலர் அலங்காரம் எங்கும் காணப்படும். எல்லோரும் சேர்ந்து உணவு அருந்துவோம்." },
+      { title: "Brother's Sacrifice", person: "Family", lang: "English", tags: ["english", "language:en", "family"], body: "My elder brother stopped his education so I could continue mine. He never complained. Instead, he always encouraged me. Every achievement of mine belongs to him." },
+      { title: "పెళ్లి రోజు (Wedding Day)", person: "Family", lang: "Telugu", tags: ["telugu", "language:te", "marriage", "family"], body: "మా పెళ్లి రోజున ఊరంతా ఒక కుటుంబంలా మారిపోయింది. ప్రతి ఇంటి వారు ఏదో ఒక ಕೆಲಸ చేశారు. ఆ రోజు ప్రేమ అంటే కలిసి ఉండడమే అని అర్థమైంది." },
+      { title: "প্রথম বর্ষার স্মৃতি (First Rain)", person: "Grandmother", lang: "Bengali", tags: ["bengali", "language:bn", "childhood", "rain"], body: "কলকাতার প্রথম বৃষ্টিতে আমরা সবাই ছাদে চলে যেতাম। মা খিচুড়ি আর ইলিশ মাছ ভাজত। সেই ভাজা মসলার আর ভিজে মাটির গন্ধ আজও মনে পড়ে।" },
+      { title: "पहिला पगार (First Salary)", person: "Father", lang: "Marathi", tags: ["marathi", "language:mr", "work", "milestone"], body: "पहिल्या पगारातून आईला घेतलेली ती साडी आणि तिच्या डोळ्यात आलेले आनंदाचे अश्रू आजही माझ्या आठवणीत ताजे आहेत. तो क्षण सर्वात मौल्यवान होता।" },
+      { title: "દિવાળીનો ગરબો (Diwali Garba)", person: "Aunt", lang: "Gujarati", tags: ["gujarati", "language:gu", "festival", "culture"], body: "નવરાત્રી અને દિવાળીમાં આખું ફળિયું સાથે મળીને ગરબા રમતું. માટીના દીવાની રોશની અને આપણો પારંપરિક પહેરવેશ તહેવારને જીવंत રાખતા હતા." },
+      { title: "നാട്ടിലെ ഓണം (Onam in Village)", person: "Uncle", lang: "Malayalam", tags: ["malayalam", "language:ml", "festival", "feast"], body: "നാട്ടിലെ ഓണവും പൂക്കളവും സദ്യയും ഒരിക്കലും മറക്കാനാവില്ല. ഊഞ്ഞാലാട്ടവും കൂട്ടുകാരുമൊത്തുള്ള കളികളും ഓണത്തുമ്പികളും ഇന്നും മനസ്സിൽ തങ്ങിനിൽക്കുന്നു." },
+      { title: "ਪਿੰਡ ਦੀ ਲੋਹੜੀ (Lohri in Village)", person: "Grandfather", lang: "Punjabi", tags: ["punjabi", "language:pa", "festival", "winter"], body: "ਲੋਹੜੀ ਦੀ ਰਾਤ ਨੂੰ ਅੱਗ ਦੇ ਦੁਆਲੇ ਸਾਰੇ ਨੱਚਦੇ ਸਨ। ਮੂੰਗਫਲੀ, ਗੱਚਕ ਅਤੇ ਰਿਉੜੀਆਂ ਵੰਡ ਕੇ ਆਪਸੀ ਖੁਸ਼ੀਆਂ ਸਾਂਝੀਆਂ ਕੀਤੀਆਂ ਜਾਂਦੀਆਂ ਸਨ।" },
+      { title: "ରଥଯାତ୍ରା ଅନୁଭୂତି (Ratha Yatra)", person: "Mother", lang: "Odia", tags: ["odia", "language:or", "festival", "devotion"], body: "ପୁରୀ ରଥଯାତ୍ରାର ସେହି ବିଶାଳ ଜନସମୁଦ୍ର ମଧ୍ୟରେ ଜଗନ୍ନାଥ ମହାପ୍ରଭୁଙ୍କ ଦର୍ଶନ ପାଇ ମନ ଶାନ୍ତିରେ ଭରିଯାଇଥିଲା। ଗଜପତି ମହାରାଜାଙ୍କ ସେବା ଅତି ରୋମାଞ୍ଚକର ଥିଲା।" }
+    ];
+
+    const storyLibrarySeed = storyWallCards2.map((story, index) => ({
       id: seedItems.length + index + 1,
       kind: 'memory',
       title: story.title,
-      content: story.body.replace(/^"|"$/g, '').replace(/\\n/g, '\n'),
+      content: story.body,
       source: 'text',
       created_at: '2026-06-29T00:00:00.000Z',
       person: story.person,
