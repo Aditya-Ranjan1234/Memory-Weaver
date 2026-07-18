@@ -3,11 +3,15 @@
   "cleanUrls": true,
   "builds": [
     { "src": "index.html", "use": "@vercel/static" },
-    { "src": "favicon.svg", "use": "@vercel/static" }
+    { "src": "favicon.svg", "use": "@vercel/static" },
+    { "src": "manifest.webmanifest", "use": "@vercel/static" },
+    { "src": "sw.js", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "/favicon.svg", "dest": "/favicon.svg" },
     { "src": "/favicon.ico", "dest": "/favicon.svg" },
+    { "src": "/manifest.webmanifest", "dest": "/manifest.webmanifest" },
+    { "src": "/sw.js", "dest": "/sw.js" },
     { "src": "/(.*)", "dest": "/index.html" }
   ],
   "headers": [
@@ -19,6 +23,18 @@
     },
     {
       "source": "/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
+      "source": "/sw.js",
       "headers": [
         { "key": "Cache-Control", "value": "no-store" }
       ]
