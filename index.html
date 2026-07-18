@@ -6,6 +6,10 @@
   <title>Memory Weaver</title>
   <meta name="description" content="A mobile-first web app for capturing family memories, timelines, recipes, and future capsules.">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#8c5e3c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
     :root {
       --bg: #f4efe7;
@@ -22,11 +26,17 @@
       margin: 0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
       color: var(--ink);
+      min-height: 100svh;
       background:
         radial-gradient(circle at top left, rgba(140,94,60,.12), transparent 30%),
         linear-gradient(180deg, #fbf7f1, #f3eadc 65%, #efe4d3);
     }
-    .wrap { max-width: 1240px; margin: 0 auto; padding: 20px; }
+    .wrap {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 20px;
+      padding-bottom: calc(92px + env(safe-area-inset-bottom));
+    }
     .hero, .grid { display: grid; gap: 18px; }
     .hero { grid-template-columns: 1.3fr .9fr; }
     .grid { grid-template-columns: 1fr 1fr; margin-top: 18px; }
@@ -237,8 +247,8 @@
     }
     .fab {
       position: fixed;
-      right: 20px;
-      bottom: 20px;
+      right: calc(18px + env(safe-area-inset-right));
+      bottom: calc(18px + env(safe-area-inset-bottom));
       width: 62px;
       height: 62px;
       border-radius: 50%;
@@ -297,6 +307,45 @@
       .hero, .grid, .stats, .story-hero { grid-template-columns: 1fr; }
       .story-wall { grid-template-columns: 1fr; }
     }
+    @media (max-width: 560px) {
+      .wrap { padding: 14px; padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+      .hero-main { padding: 20px; min-height: auto; }
+      .hero-side { padding: 18px; }
+      .lead { font-size: 16px; }
+      .toolbar > button { flex: 1 1 100%; }
+      .fab { width: 58px; height: 58px; font-size: 32px; }
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+      background: rgba(255,250,242,.92);
+      border-top: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+      z-index: 30;
+      display: none;
+    }
+    .bottom-nav .navrow {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .bottom-nav button {
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      font-weight: 800;
+      padding: 12px 12px;
+      border-radius: 16px;
+    }
+    @media (max-width: 900px) {
+      .bottom-nav { display: block; }
+    }
   </style>
 </head>
 <body>
@@ -344,13 +393,13 @@
       </div>
     </details>
 
-    <details class="card panel stories-collapsible" style="margin-top:18px;">
+    <details class="card panel stories-collapsible" id="storiesSection" style="margin-top:18px;">
       <summary class="section-title stories-summary">
         <div>
           <h2 style="margin:0;">Stories Wall</h2>
           <div class="tiny">Browse by language and tags</div>
         </div>
-        <div class="tiny stories-chev" aria-hidden="true">▾</div>
+        <div class="tiny stories-chev" aria-hidden="true">&#9662;</div>
       </summary>
       <p class="section-copy" style="margin-top:12px;">A living wall of family memories across languages.</p>
       <div class="filterbar" id="tagFilters"></div>
@@ -358,7 +407,7 @@
     </details>
 
     <section class="grid">
-      <div class="card panel timeline-span" style="position: relative; overflow: visible;">
+      <div class="card panel timeline-span" id="timelineSection" style="position: relative; overflow: visible;">
         <div class="section-title" style="margin-bottom: 8px;">
           <div>
             <h2 style="margin: 0; font-size: 24px; display: inline-flex; align-items: center; gap: 8px;">
@@ -386,7 +435,7 @@
         </div>
       </div>
 
-      <div class="card panel timeline-span" style="margin-top: 10px;">
+      <div class="card panel timeline-span" id="librarySection" style="margin-top: 10px;">
         <div class="section-title">
           <div>
             <h2>Memory Library</h2>
@@ -399,6 +448,14 @@
   </div>
 
   <button class="fab" id="fabBtn" aria-label="Add story">+</button>
+
+  <nav class="bottom-nav" aria-label="Primary">
+    <div class="navrow">
+      <button type="button" data-jump="storiesSection">Stories</button>
+      <button type="button" data-jump="timelineSection">Timeline</button>
+      <button type="button" data-jump="librarySection">Library</button>
+    </div>
+  </nav>
 
   <div class="modal-backdrop" id="storyModal">
     <div class="modal">
@@ -1014,6 +1071,14 @@
       document.getElementById('storyModal').classList.add('open');
     });
 
+    document.querySelectorAll('[data-jump]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-jump');
+        const el = id ? document.getElementById(id) : null;
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
     document.getElementById('closeModalBtn').addEventListener('click', () => {
       document.getElementById('storyModal').classList.remove('open');
     });
@@ -1091,6 +1156,9 @@
 
     try {
       if (!localStorage.getItem(STORAGE_KEY)) saveState(clone(demoState));
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      }
       render();
     } catch (e) {
       emergencyRender();

@@ -1,0 +1,19 @@
+{
+  "name": "Memory Weaver",
+  "short_name": "Weaver",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fbf7f1",
+  "theme_color": "#8c5e3c",
+  "description": "Capture family stories, build timelines, and preserve memories across generations.",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+
