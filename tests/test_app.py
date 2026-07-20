@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import io
-import json
 import os
 import re
 import tempfile
@@ -176,12 +175,6 @@ class MemoryWeaverTests(unittest.TestCase):
         service_worker = self.client.get("/sw.js").text
         self.assertIn('const CACHE_NAME = "memory-weaver-v2"', service_worker)
         self.assertIn("!STATIC_PATHS.has(url.pathname)", service_worker)
-
-        vercel_config = json.loads(Path("vercel.json").read_text(encoding="utf-8"))
-        self.assertEqual(
-            vercel_config["functions"]["app.py"]["includeFiles"],
-            "memory_weaver/public/**",
-        )
 
         anonymous = TestClient(app)
         self.assertEqual(

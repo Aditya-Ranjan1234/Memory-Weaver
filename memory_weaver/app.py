@@ -40,7 +40,7 @@ from memory_weaver.database import (
 PACKAGE_DIR = Path(__file__).resolve().parent
 ROOT = PACKAGE_DIR.parent
 WEB_DIR = PACKAGE_DIR / "web"
-PUBLIC_DIR = PACKAGE_DIR / "public"
+PUBLIC_DIR = ROOT
 
 GOOGLE_CLIENT_ID = os.environ.get("MW_GOOGLE_CLIENT_ID", "").strip()
 IS_PRODUCTION = (

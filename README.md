@@ -23,7 +23,7 @@ Memory Weaver is a mobile-first family archive for preserving personal stories, 
 - `memory_weaver/app.py`: routes, authentication, OpenAI workflows, and page serving
 - `memory_weaver/database.py`: shared SQLAlchemy models and database sessions
 - `memory_weaver/web/`: authenticated application, login, and invitation pages
-- `memory_weaver/public/`: landing page and PWA assets
+- `index.html`, `favicon.svg`, `manifest.webmanifest`, `sw.js`: Vercel-visible landing page and PWA assets
 - `migrations/`: Alembic production schema migrations
 - `tests/`: isolated security and functionality tests
 - `tools/story_seed/`: non-production demo seed utilities
