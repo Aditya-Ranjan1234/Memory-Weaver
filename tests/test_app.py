@@ -153,6 +153,11 @@ class MemoryWeaverTests(unittest.TestCase):
         )
         self.assertEqual(rejected.status_code, 403)
 
+    def test_logout_ends_authenticated_session(self) -> None:
+        response = self.client.post("/api/logout", headers=self.csrf_headers)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.client.get("/api/stories").status_code, 401)
+
     def test_all_pages_and_static_assets(self) -> None:
         expected = {
             "/": "text/html",
@@ -172,9 +177,14 @@ class MemoryWeaverTests(unittest.TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(content_type, response.headers["content-type"])
 
+        landing = self.client.get("/").text
+        self.assertIn('class="auth-link" href="/login">Sign in</a>', landing)
+        self.assertIn('id="logoutBtn"', self.client.get("/app").text)
+
         service_worker = self.client.get("/sw.js").text
-        self.assertIn('const CACHE_NAME = "memory-weaver-v2"', service_worker)
+        self.assertIn('const CACHE_NAME = "memory-weaver-v3"', service_worker)
         self.assertIn("!STATIC_PATHS.has(url.pathname)", service_worker)
+        self.assertIn('url.pathname === "/"', service_worker)
 
         anonymous = TestClient(app)
         self.assertEqual(

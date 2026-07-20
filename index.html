@@ -49,7 +49,22 @@
     }
     .hero-main { padding: 28px; min-height: 280px; }
     .hero-side { padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+    .hero-topline { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
     .eyebrow { text-transform: uppercase; letter-spacing: .18em; font-size: 12px; color: var(--accent); font-weight: 700; }
+    .auth-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 16px;
+      border-radius: 999px;
+      background: #2f4d3b;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+      box-shadow: 0 8px 24px rgba(47,77,59,.18);
+    }
+    .auth-link:focus-visible { outline: 3px solid rgba(140,94,60,.3); outline-offset: 3px; }
     h1 { font-size: clamp(40px, 7vw, 74px); line-height: .95; margin: 12px 0; letter-spacing: -.05em; }
     .lead { font-size: 18px; color: var(--muted); max-width: 62ch; }
     .version-badge {
@@ -311,6 +326,7 @@
       .wrap { padding: 14px; padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
       .hero-main { padding: 20px; min-height: auto; }
       .hero-side { padding: 18px; }
+      .hero-topline { align-items: flex-start; }
       .lead { font-size: 16px; }
       .toolbar > button { flex: 1 1 100%; }
       .fab { width: 58px; height: 58px; font-size: 32px; }
@@ -352,7 +368,10 @@
   <div class="wrap">
     <section class="hero">
       <div class="card hero-main">
-        <div class="eyebrow">Memory Weaver</div>
+        <div class="hero-topline">
+          <div class="eyebrow">Memory Weaver</div>
+          <a class="auth-link" href="/login">Sign in</a>
+        </div>
         <h1>Capture a life. Preserve the voice. Build the family archive.</h1>
         <p class="lead">A polished family memory platform for recording stories, organizing timelines, and preserving cultural detail across generations.</p>
         <div class="version-badge">Live build v4</div>
