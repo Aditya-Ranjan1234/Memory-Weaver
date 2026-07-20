@@ -3,6 +3,7 @@
   "functions": {
     "app.py": {
       "maxDuration": 300,
+      "includeFiles": "memory_weaver/{public,web}/**",
       "excludeFiles": "{.venv/**,.git/**,__pycache__/**,**/*.db,**/*.log,tools/**,tests/**}"
     }
   }
