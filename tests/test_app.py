@@ -180,7 +180,7 @@ class MemoryWeaverTests(unittest.TestCase):
         vercel_config = json.loads(Path("vercel.json").read_text(encoding="utf-8"))
         self.assertEqual(
             vercel_config["functions"]["app.py"]["includeFiles"],
-            "memory_weaver/{public,web}/**",
+            "memory_weaver/public/**",
         )
 
         anonymous = TestClient(app)
