@@ -1,10 +1,11 @@
-const CACHE_NAME = "memory-weaver-v1";
+const CACHE_NAME = "memory-weaver-v2";
 const ASSETS = [
   "/",
   "/index.html",
   "/favicon.svg",
   "/manifest.webmanifest"
 ];
+const STATIC_PATHS = new Set(ASSETS);
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -24,6 +25,11 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
 
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin || !STATIC_PATHS.has(url.pathname)) {
+    return;
+  }
+
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
@@ -35,4 +41,3 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
-

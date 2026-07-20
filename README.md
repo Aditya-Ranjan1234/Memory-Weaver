@@ -23,11 +23,11 @@ Memory Weaver is a mobile-first family archive for preserving personal stories, 
 - `memory_weaver/app.py`: routes, authentication, OpenAI workflows, and page serving
 - `memory_weaver/database.py`: shared SQLAlchemy models and database sessions
 - `memory_weaver/web/`: authenticated application, login, and invitation pages
+- `memory_weaver/public/`: landing page and PWA assets
 - `migrations/`: Alembic production schema migrations
 - `tests/`: isolated security and functionality tests
 - `tools/story_seed/`: non-production demo seed utilities
 - `docs/`: deployment and operational documentation
-- `index.html`: public demonstration landing page
 - `vercel.json`: Vercel Function configuration
 
 ## Local Setup
@@ -131,4 +131,4 @@ The test suite uses a temporary SQLite database and a mocked OpenAI client, so i
 
 ## Privacy Notes
 
-Family stories and voice recordings can contain sensitive personal data. Before a broad public launch, add reviewed privacy and terms pages, account deletion, story deletion/export, and a clear disclosure that recordings and transcripts are processed by OpenAI. See [SECURITY.md](SECURITY.md) for reporting and credential-handling rules.
+Family stories and voice recordings can contain sensitive personal data. Before a broad public launch, add reviewed privacy and terms pages, account deletion, story deletion/export, and a clear disclosure that recordings and transcripts are processed by OpenAI. See [docs/SECURITY.md](docs/SECURITY.md) for reporting and credential-handling rules.

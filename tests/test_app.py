@@ -16,6 +16,7 @@ os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB}"
 os.environ["MW_DEV_AUTH"] = "1"
 os.environ["MW_SESSION_SECRET"] = "test-session-secret"
 os.environ["OPENAI_API_KEY"] = "test-key"
+os.environ["MW_GOOGLE_CLIENT_ID"] = "test-client.apps.googleusercontent.com"
 
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -58,22 +59,49 @@ class MemoryWeaverTests(unittest.TestCase):
     def setUp(self) -> None:
         self.client = TestClient(app)
         self.client.__enter__()
-        login_page = self.client.get("/login")
-        token_match = re.search(
-            r'<meta name="csrf-token" content="([^"]+)"', login_page.text
-        )
-        self.assertIsNotNone(token_match)
+        login_token = self._csrf_from(self.client, "/login")
         response = self.client.post(
             "/api/dev-login",
-            headers={"X-CSRF-Token": token_match.group(1)},
+            headers={"X-CSRF-Token": login_token},
         )
         self.assertEqual(response.status_code, 200)
-        app_page = self.client.get("/app")
-        token_match = re.search(
-            r'<meta name="csrf-token" content="([^"]+)"', app_page.text
-        )
+        self.csrf_headers = {"X-CSRF-Token": self._csrf_from(self.client, "/app")}
+
+    def _csrf_from(self, client: TestClient, path: str) -> str:
+        page = client.get(path)
+        self.assertEqual(page.status_code, 200)
+        token_match = re.search(r'<meta name="csrf-token" content="([^"]+)"', page.text)
         self.assertIsNotNone(token_match)
-        self.csrf_headers = {"X-CSRF-Token": token_match.group(1)}
+        return token_match.group(1)
+
+    def _google_login(
+        self,
+        client: TestClient,
+        *,
+        sub: str,
+        email: str,
+        name: str,
+    ) -> dict[str, str]:
+        login_token = self._csrf_from(client, "/login")
+        identity = {
+            "sub": sub,
+            "email": email,
+            "email_verified": True,
+            "name": name,
+            "picture": "https://example.com/avatar.png",
+        }
+        with patch(
+            "memory_weaver.app.google_id_token.verify_oauth2_token",
+            return_value=identity,
+        ):
+            response = client.post(
+                "/api/auth/google",
+                headers={"X-CSRF-Token": login_token},
+                json={"credential": f"fake-google-token-{sub}"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["user"]["email"], email)
+        return {"X-CSRF-Token": self._csrf_from(client, "/app")}
 
     def tearDown(self) -> None:
         self.client.__exit__(None, None, None)
@@ -124,6 +152,103 @@ class MemoryWeaverTests(unittest.TestCase):
             json={"title": "Blocked", "content": "Missing CSRF token", "tags": []},
         )
         self.assertEqual(rejected.status_code, 403)
+
+    def test_all_pages_and_static_assets(self) -> None:
+        expected = {
+            "/": "text/html",
+            "/index.html": "text/html",
+            "/login": "text/html",
+            "/app": "text/html",
+            "/invite": "text/html",
+            "/favicon.svg": "image/svg+xml",
+            "/favicon.ico": "image/svg+xml",
+            "/manifest.webmanifest": "application/manifest+json",
+            "/sw.js": "application/javascript",
+            "/health": "application/json",
+        }
+        for path, content_type in expected.items():
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn(content_type, response.headers["content-type"])
+
+        service_worker = self.client.get("/sw.js").text
+        self.assertIn('const CACHE_NAME = "memory-weaver-v2"', service_worker)
+        self.assertIn("!STATIC_PATHS.has(url.pathname)", service_worker)
+
+        anonymous = TestClient(app)
+        self.assertEqual(
+            anonymous.get("/app", follow_redirects=False).status_code,
+            307,
+        )
+        self.assertEqual(anonymous.get("/api/stories").status_code, 401)
+
+    def test_google_accounts_connect_family_archives(self) -> None:
+        with TestClient(app) as inviter, TestClient(app) as relative:
+            inviter_headers = self._google_login(
+                inviter,
+                sub="google-user-one",
+                email="one@example.test",
+                name="Asha",
+            )
+            relative_headers = self._google_login(
+                relative,
+                sub="google-user-two",
+                email="two@example.test",
+                name="Ravi",
+            )
+
+            first_story = inviter.post(
+                "/api/stories",
+                headers=inviter_headers,
+                json={
+                    "title": "Asha's memory",
+                    "content": "A story visible to connected family.",
+                    "tags": ["family"],
+                },
+            )
+            second_story = relative.post(
+                "/api/stories",
+                headers=relative_headers,
+                json={
+                    "title": "Ravi's memory",
+                    "content": "Another story in the shared archive.",
+                    "tags": ["family"],
+                },
+            )
+            self.assertEqual(first_story.status_code, 200)
+            self.assertEqual(second_story.status_code, 200)
+
+            invite = inviter.post("/api/family/invite", headers=inviter_headers)
+            self.assertEqual(invite.status_code, 200)
+            token = invite.json()["url"].split("#", 1)[1]
+            accepted = relative.post(
+                "/api/family/accept",
+                headers=relative_headers,
+                json={"token": token},
+            )
+            self.assertEqual(accepted.status_code, 200)
+
+            inviter_family = inviter.get("/api/family").json()["family"]
+            relative_family = relative.get("/api/family").json()["family"]
+            self.assertEqual([member["name"] for member in inviter_family], ["Ravi"])
+            self.assertEqual([member["name"] for member in relative_family], ["Asha"])
+
+            shared_titles = {
+                story["title"]
+                for story in inviter.get("/api/stories").json()["stories"]
+            }
+            own_titles = {
+                story["title"]
+                for story in inviter.get("/api/stories?scope=me").json()["stories"]
+            }
+            self.assertIn("Asha's memory", shared_titles)
+            self.assertIn("Ravi's memory", shared_titles)
+            self.assertIn("Asha's memory", own_titles)
+            self.assertNotIn("Ravi's memory", own_titles)
+            self.assertEqual(
+                inviter.get("/api/dashboard").json()["counts"]["family"], 1
+            )
 
     @patch("memory_weaver.app.get_openai_client")
     def test_voice_and_interview_flow(self, openai_client) -> None:

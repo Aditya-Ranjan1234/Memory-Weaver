@@ -40,6 +40,7 @@ from memory_weaver.database import (
 PACKAGE_DIR = Path(__file__).resolve().parent
 ROOT = PACKAGE_DIR.parent
 WEB_DIR = PACKAGE_DIR / "web"
+PUBLIC_DIR = PACKAGE_DIR / "public"
 
 GOOGLE_CLIENT_ID = os.environ.get("MW_GOOGLE_CLIENT_ID", "").strip()
 IS_PRODUCTION = (
@@ -310,30 +311,33 @@ async def same_origin_posts(request: Request, call_next):
 
 @app.get("/favicon.svg", include_in_schema=False)
 def favicon() -> FileResponse:
-    return FileResponse(ROOT / "favicon.svg", media_type="image/svg+xml")
+    return FileResponse(PUBLIC_DIR / "favicon.svg", media_type="image/svg+xml")
 
 
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon_ico() -> FileResponse:
-    return FileResponse(ROOT / "favicon.svg", media_type="image/svg+xml")
+    return FileResponse(PUBLIC_DIR / "favicon.svg", media_type="image/svg+xml")
 
 
 @app.get("/manifest.webmanifest", include_in_schema=False)
 def manifest() -> FileResponse:
     return FileResponse(
-        ROOT / "manifest.webmanifest", media_type="application/manifest+json"
+        PUBLIC_DIR / "manifest.webmanifest", media_type="application/manifest+json"
     )
 
 
 @app.get("/sw.js", include_in_schema=False)
 def service_worker() -> FileResponse:
-    return FileResponse(ROOT / "sw.js", media_type="application/javascript")
+    return FileResponse(PUBLIC_DIR / "sw.js", media_type="application/javascript")
 
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/index.html", response_class=HTMLResponse, include_in_schema=False)
 def landing(request: Request) -> str:
     nonce = request.state.csp_nonce
-    return read_text(ROOT / "index.html").replace("<script", f'<script nonce="{nonce}"')
+    return read_text(PUBLIC_DIR / "index.html").replace(
+        "<script", f'<script nonce="{nonce}"'
+    )
 
 
 @app.get("/login", response_class=HTMLResponse)
