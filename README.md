@@ -1,112 +1,134 @@
 # Memory Weaver
 
-Memory Weaver is a mobile-first memory archive that helps families preserve the voice, stories, recipes, and timelines of their elders before those details fade away.
+Memory Weaver is a mobile-first family archive for preserving personal stories, shared timelines, cultural details, and the voices behind them.
 
-## Pitch
+## Features
 
-Every family has stories that live in people, not documents.
-Memory Weaver turns those stories into a living archive that can be captured in minutes, organized automatically, and replayed as a family memory book, timeline, or future message capsule.
+- Google-only authentication with backend ID-token verification
+- Private story creation with tags, dates, and timeline events
+- Browser voice recording and OpenAI speech-to-text
+- A conversational AI oral-history interviewer
+- AI-assisted story creation that preserves the storyteller's language and details
+- Seven-day, one-time family invitation links
+- Hashed invitation tokens that stay out of request logs
+- Combined stories and timelines for connected relatives
+- Five-story pagination and working tag filters
+- Responsive desktop and mobile interface
+- SQLite support for local development and Neon Postgres for production
+- CSRF protection, secure cookies, security headers, strict validation, and persistent AI rate limits
 
-## Why It Matters
+## Architecture
 
-- Families lose irreplaceable stories when elders pass before their memories are recorded
-- Most tools are built for notes, not for voice, emotion, and cultural context
-- Memory Weaver is designed for low-friction family capture, especially when a grandchild is helping an elder use it
+- `app.py`: local and Vercel FastAPI entry point
+- `memory_weaver/app.py`: routes, authentication, OpenAI workflows, and page serving
+- `memory_weaver/database.py`: shared SQLAlchemy models and database sessions
+- `memory_weaver/web/`: authenticated application, login, and invitation pages
+- `migrations/`: Alembic production schema migrations
+- `tests/`: isolated security and functionality tests
+- `tools/story_seed/`: non-production demo seed utilities
+- `docs/`: deployment and operational documentation
+- `index.html`: public demonstration landing page
+- `vercel.json`: Vercel Function configuration
 
-## What It Does
+## Local Setup
 
-- Captures family stories from text, media links, Reddit imports, and WhatsApp-style forwards
-- Organizes memories into timelines, recipes, capsules, and story collections
-- Preserves culturally specific details like dialect, place names, food, and family roles
-- Keeps the experience simple enough to use on a phone during a 30-minute family conversation
-
-## Live Features
-
-- Responsive landing page and dashboard
-- Memory capture form with working save flow
-- Sample memory seed collection
-- Timeline view
-- Memory library
-- Story tools panel
-- Reset to demo data
-- JSON export for portability
-
-## Example Memory Types
-
-- Childhood home descriptions
-- Migration and city move stories
-- First job stories
-- Marriage memories
-- Family recipes
-- Festival songs
-- Village market scenes
-- Future memory capsules for weddings or milestones
-
-## Data Model
-
-Each memory stores:
-
-- `kind`
-- `title`
-- `content`
-- `source`
-- `created_at`
-- `person`
-- `language`
-- `tags`
-- `metadata`
-
-## Deployment
-
-This repo is currently Vercel-ready as a static web app.
-
-Best deployment targets:
-
-- Vercel
-- GitHub Pages
-- Netlify
-
-## Running Locally
-
-Use the existing `venv` and open the app locally:
+Always run the project inside its virtual environment.
 
 ```powershell
-.venv\Scripts\Activate.ps1
+cd "D:\6th Sem\Build FOr Good"
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+Create `.env.local` from `.env.example`. This file is ignored by Git and Vercel.
+
+```text
+DATABASE_URL=sqlite:///./mw_local.db
+DATABASE_URL_UNPOOLED=
+MW_GOOGLE_CLIENT_ID=
+MW_SESSION_SECRET=replace-with-a-long-random-value
+OPENAI_API_KEY=
+MW_INTERVIEW_MODEL=gpt-4o-mini
+MW_TRANSCRIBE_MODEL=gpt-4o-mini-transcribe
+MW_DEV_AUTH=1
+MW_ALLOWED_HOSTS=127.0.0.1,localhost
+```
+
+Generate a session secret from the venv:
+
+```powershell
+python -c "import secrets; print(secrets.token_urlsafe(64))"
+```
+
+Run the app:
+
+```powershell
 python app.py
 ```
 
-Then open:
+Open [http://127.0.0.1:8000/login](http://127.0.0.1:8000/login). `MW_DEV_AUTH=1` enables the local test-login button and is forcibly disabled on Vercel.
 
-- [http://127.0.0.1:8000](http://127.0.0.1:8000)
+## Google Authentication
 
-## Project Structure
+Create a Google Identity Services Web application client and add these Authorized JavaScript origins:
 
-- [`index.html`](index.html) - Static deployed web app
-- [`app.py`](app.py) - Legacy local prototype logic
-- [`vercel.json`](vercel.json) - Vercel config
-- [`.gitignore`](.gitignore) - Ignore rules
-
-## Virtual Environment
-
-If you ever need to recreate the local `venv`:
-
-```powershell
-C:\Users\OMEN\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+```text
+http://127.0.0.1:8000
+http://localhost:8000
+https://your-production-domain.example
 ```
 
-## Suggested Next Steps
+Set the resulting client ID as `MW_GOOGLE_CLIENT_ID`. This sign-in flow needs the Web client ID, not the downloaded OAuth client JSON file or client secret.
 
-- Add real uploads for audio, photos, and video
-- Add family accounts and permissions
-- Add timeline editing
-- Add PDF book generation
-- Add AI story summaries
-- Add a chat-style “Talk to Grandma” experience
+## Neon Postgres
 
-## Notes
+Connect a Neon database through the Vercel Marketplace. Use the pooled URL at runtime and the direct URL for migrations:
 
-- Reddit ingestion and backend routes were part of earlier prototypes
-- The deployed Vercel version is static and runs fully in the browser
-- Memory data is stored locally in the browser for this version
+```text
+DATABASE_URL=postgresql://...-pooler.../neondb?sslmode=require
+DATABASE_URL_UNPOOLED=postgresql://.../neondb?sslmode=require
+```
+
+Apply migrations from the venv before the first production deployment:
+
+```powershell
+python -m alembic upgrade head
+python -m alembic current
+```
+
+Never commit a database URL, password, API key, `.env.local`, or SQLite database.
+
+## OpenAI
+
+The server uses:
+
+- `gpt-4o-mini` for interview questions and final story editing
+- `gpt-4o-mini-transcribe` for voice-to-text
+
+Store `OPENAI_API_KEY` only in the server environment. Voice recordings are currently transcribed and discarded rather than permanently stored.
+
+The browser stops recordings at five minutes or about 3.8 MB so requests remain below Vercel's Function payload limit.
+
+## Vercel Deployment
+
+Follow the [secure deployment guide](docs/DEPLOYMENT.md). Production and Preview deployments must not share the same family-story database.
+
+## Tests
+
+Run all tests through the venv:
+
+```powershell
+python -m unittest discover -s tests -v
+python -m alembic check
+python -m pip_audit -r requirements.txt
+ruff check app.py memory_weaver migrations tests
+ruff format --check app.py memory_weaver migrations tests
+$files = git ls-files -- . ':(exclude).secrets.baseline'
+detect-secrets-hook --baseline .secrets.baseline $files
+```
+
+The test suite uses a temporary SQLite database and a mocked OpenAI client, so it does not spend API credits or modify production data.
+
+## Privacy Notes
+
+Family stories and voice recordings can contain sensitive personal data. Before a broad public launch, add reviewed privacy and terms pages, account deletion, story deletion/export, and a clear disclosure that recordings and transcripts are processed by OpenAI. See [SECURITY.md](SECURITY.md) for reporting and credential-handling rules.

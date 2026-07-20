@@ -15,7 +15,7 @@ def js_str(s: str) -> str:
 
 
 def main() -> None:
-    p = Path("scripts/stories.json")
+    p = Path(__file__).with_name("stories.json")
     raw = p.read_bytes()
     # PowerShell redirection often writes UTF-16 with BOM.
     if raw.startswith(b"\xff\xfe") or raw.startswith(b"\xfe\xff"):

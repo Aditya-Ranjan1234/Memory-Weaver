@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Memory Weaver - App</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="csrf-token" content="{{CSRF_TOKEN}}">
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --panel: rgba(255,250,242,.92);
+      --ink: #1f1a17;
+      --muted: #6d625b;
+      --accent: #8c5e3c;
+      --accent2: #c78b5a;
+      --line: #eadfcd;
+      --shadow: 0 18px 60px rgba(62,40,25,.10);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color: var(--ink);
+      min-height: 100svh;
+      background:
+        radial-gradient(circle at top left, rgba(140,94,60,.12), transparent 30%),
+        linear-gradient(180deg, #fbf7f1, #f3eadc 65%, #efe4d3);
+    }
+    .wrap { max-width: 1240px; margin: 0 auto; padding: 18px; padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+    .topbar {
+      display:flex; align-items:center; justify-content: space-between; gap: 12px;
+      padding: 14px 16px;
+    }
+    .brand { display:flex; align-items: center; gap: 10px; }
+    .brand strong { letter-spacing: -.03em; font-size: 18px; }
+    .chip { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #fff; border: 1px solid var(--line); color: var(--muted); }
+    .btn {
+      cursor:pointer; border:0; border-radius: 14px; padding: 12px 16px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-weight: 800;
+    }
+    .btn.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    .grid { display:grid; gap: 14px; grid-template-columns: 1.2fr .8fr; margin-top: 14px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    .panel { padding: 18px; }
+    h2 { margin: 0 0 10px; font-size: 22px; }
+    .muted { color: var(--muted); }
+    .tiny { font-size: 12px; color: var(--muted); }
+    .toolbar { display:flex; gap: 10px; flex-wrap: wrap; }
+    .list { display: grid; gap: 12px; }
+    .item { padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: rgba(255,255,255,.72); }
+    .itemhead { display:flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .tagrow { display:flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .tag { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #f4eadc; color: #6d4b2a; }
+    .pagerbar { display:flex; align-items:center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .pagerlabel { flex: 1; text-align: center; font-size: 12px; color: var(--muted); }
+    .filterbar { display:flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 12px; }
+    .filter-chip { border: 1px solid var(--line); background: rgba(255,255,255,.85); color: var(--ink); padding: 8px 12px; border-radius: 999px; font-size: 13px; cursor:pointer; }
+    .filter-chip.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border-color: transparent; }
+
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(31,26,23,.45); backdrop-filter: blur(4px); display:none; align-items:center; justify-content:center; padding: 18px; z-index: 50; }
+    .modal-backdrop.open { display:flex; }
+    .modal { width: min(760px, 100%); max-height: 92vh; overflow: auto; background: #fffaf2; border-radius: 26px; border: 1px solid var(--line); box-shadow: 0 24px 80px rgba(0,0,0,.28); padding: 18px; }
+    label { display:block; font-size: 13px; color: var(--muted); margin: 12px 0 6px; }
+    input, textarea, select { width:100%; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: #fff; color: var(--ink); font: inherit; }
+    textarea { min-height: 140px; resize: vertical; }
+    .record-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+    .record-status { font-size:12px; color:var(--muted); }
+    .btn.recording { background:#a63f3f; box-shadow:0 0 0 5px rgba(166,63,63,.12); }
+    .interview-panel { margin-top:14px; }
+    .interview-start { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; }
+    .interview-chat { display:grid; gap:12px; max-height:520px; overflow:auto; padding:14px 4px; scroll-behavior:smooth; }
+    .bubble { max-width:min(720px,88%); padding:12px 14px; border-radius:18px; line-height:1.6; white-space:pre-wrap; }
+    .bubble.bot { justify-self:start; background:#fff; border:1px solid var(--line); border-bottom-left-radius:6px; }
+    .bubble.user { justify-self:end; background:#2f4d3b; color:#fff; border-bottom-right-radius:6px; }
+    .interview-compose { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:end; }
+    .interview-compose textarea { min-height:72px; }
+    .interview-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .hidden { display:none !important; }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+      background: rgba(255,250,242,.92);
+      border-top: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+      z-index: 40;
+      display: none;
+    }
+    .bottom-nav .navrow {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    .bottom-nav button {
+      background: #fff;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      font-weight: 800;
+      padding: 12px 12px;
+      border-radius: 16px;
+      cursor: pointer;
+    }
+    @media (max-width: 900px) {
+      .bottom-nav { display: block; }
+      .interview-start, .interview-compose { grid-template-columns:1fr; }
+      .bubble { max-width:94%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="card topbar">
+      <div class="brand">
+        <strong>Memory Weaver</strong>
+        <span class="chip" id="meChip">Signed in</span>
+      </div>
+      <div class="toolbar">
+        <button class="btn ghost" id="inviteBtn" type="button">Invite family</button>
+        <button class="btn ghost" id="openInterviewBtn" type="button">AI interview</button>
+        <button class="btn" id="openComposerBtn" type="button">Add story</button>
+        <button class="btn ghost" id="logoutBtn" type="button">Logout</button>
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="card panel" id="storiesSection">
+        <div style="display:flex; justify-content: space-between; gap: 12px; align-items: end;">
+          <div>
+            <h2>Stories</h2>
+            <div class="tiny">Your stories plus connected family (once accepted).</div>
+          </div>
+          <div class="tiny" id="counts"></div>
+        </div>
+        <div class="filterbar" id="tagFilters"></div>
+        <div class="list" id="library"></div>
+      </div>
+
+      <aside class="card panel" id="familySection">
+        <h2>Family</h2>
+        <div class="muted" style="margin-bottom:10px;">Invite relatives and combine timelines.</div>
+        <div class="item">
+          <div class="tiny" style="margin-bottom:6px;">Invite link</div>
+          <div class="muted" id="inviteLink">Create an invite to get a shareable link.</div>
+        </div>
+        <div style="height:12px;"></div>
+        <div class="item">
+          <div class="tiny" style="margin-bottom:10px;">Connected members</div>
+          <div id="familyList" class="muted">None yet.</div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="card panel interview-panel" id="interviewSection">
+      <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap;">
+        <div>
+          <h2>Memory Interview</h2>
+          <div class="muted">A natural interviewer that listens, follows details, and helps shape a fuller story.</div>
+        </div>
+        <span class="chip">OpenAI</span>
+      </div>
+
+      <div id="interviewStart" style="margin-top:14px;">
+        <label for="interviewTopic">What memory would you like to explore? (optional)</label>
+        <div class="interview-start">
+          <input id="interviewTopic" placeholder="e.g., Grandma's kitchen, moving to Bengaluru, first salary">
+          <button class="btn" id="startInterviewBtn" type="button">Start conversation</button>
+        </div>
+      </div>
+
+      <div id="interviewActive" class="hidden">
+        <div class="interview-chat" id="interviewChat" aria-live="polite"></div>
+        <div class="interview-compose">
+          <textarea id="interviewInput" placeholder="Type your answer, or record it..."></textarea>
+          <button class="btn" id="sendInterviewBtn" type="button">Send</button>
+        </div>
+        <div class="interview-actions">
+          <button class="btn ghost" id="interviewMicBtn" type="button">Record answer</button>
+          <span class="record-status" id="interviewMicStatus">Microphone ready</span>
+          <button class="btn ghost" id="finishInterviewBtn" type="button">Create story from interview</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <nav class="bottom-nav" aria-label="Primary">
+    <div class="navrow">
+      <button type="button" data-jump="storiesSection">Stories</button>
+      <button type="button" data-jump="familySection">Family</button>
+      <button type="button" data-jump="interviewSection">Interview</button>
+    </div>
+  </nav>
+
+  <div class="modal-backdrop" id="composerModal">
+    <div class="modal">
+      <div style="display:flex; justify-content: space-between; gap: 12px; align-items:center;">
+        <h2 style="margin:0;">Add Story</h2>
+        <button class="btn ghost" type="button" id="closeComposerBtn">Close</button>
+      </div>
+      <form id="storyForm">
+        <label>Type</label>
+        <select name="kind">
+          <option value="memory">Memory</option>
+          <option value="timeline_event">Timeline Event</option>
+        </select>
+        <label>Title</label>
+        <input name="title" placeholder="e.g., First salary, Temple festival">
+        <label>Content</label>
+        <textarea name="content" id="storyContent" placeholder="Write the story, or record your voice..."></textarea>
+        <div class="record-row">
+          <button class="btn ghost" type="button" id="storyMicBtn">Record voice</button>
+          <span class="record-status" id="storyMicStatus">Microphone ready</span>
+        </div>
+        <label>Tags (comma separated)</label>
+        <input name="tags" placeholder="family, festival, food">
+        <label>Year (optional, for timeline)</label>
+        <input name="year" placeholder="e.g., 1978">
+        <div class="toolbar" style="margin-top:14px;">
+          <button class="btn" type="submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script nonce="{{CSP_NONCE}}">
+    const PAGE_SIZE = 5;
+    const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
+    let activeTag = 'all';
+    let page = 0;
+    let stories = [];
+    let interviewId = null;
+
+    const esc = (s) => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+    function parseTags(s) {
+      return String(s || '').split(',').map(t => t.trim()).filter(Boolean);
+    }
+
+    function getBaseTags(items) {
+      const tags = new Set();
+      (items || []).forEach(it => (it.tags || []).forEach(t => tags.add(String(t))));
+      const ordered = Array.from(tags).filter(Boolean).sort((a,b) => a.localeCompare(b));
+      return ['all', ...ordered];
+    }
+
+    function filtered() {
+      if (activeTag === 'all') return stories;
+      return stories.filter(s => (s.tags || []).some(t => String(t).toLowerCase() === activeTag.toLowerCase()));
+    }
+
+    function render() {
+      const library = document.getElementById('library');
+      const items = filtered();
+      const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+      page = Math.min(page, totalPages - 1);
+      const start = page * PAGE_SIZE;
+      const end = start + PAGE_SIZE;
+      const pageItems = items.slice(start, end);
+
+      const filters = document.getElementById('tagFilters');
+      const baseTags = getBaseTags(stories);
+      filters.innerHTML = baseTags.map(t => `<button class=\"filter-chip ${t === activeTag ? 'active':''}\" data-tag=\"${esc(t)}\" type=\"button\">${esc(t)}</button>`).join('');
+      filters.querySelectorAll('[data-tag]').forEach(btn => btn.addEventListener('click', () => { activeTag = btn.dataset.tag; page = 0; render(); }));
+
+      const pager = `
+        <div class="pagerbar">
+          <button class="btn ghost" id="prevBtn" type="button" ${page<=0?'disabled':''}>Prev</button>
+          <div class="pagerlabel">Page ${page+1} / ${totalPages}</div>
+          <button class="btn ghost" id="nextBtn" type="button" ${page>=totalPages-1?'disabled':''}>Next</button>
+        </div>
+      `;
+
+      const body = pageItems.length ? pageItems.map(s => `
+        <div class="item">
+          <div class="itemhead">
+            <strong>${esc(s.title)}</strong>
+            <span class="tiny">${esc(s.kind)}${s.year ? ' / ' + esc(s.year) : ''}</span>
+          </div>
+          <div class="muted" style="margin-top:8px; line-height:1.6;">${esc(s.content).replace(/\\n/g,'<br>')}</div>
+          <div class="tagrow">${(s.tags||[]).slice(0,6).map(t => `<span class=\"tag\">${esc(t)}</span>`).join('')}</div>
+          <div class="tiny" style="margin-top:10px;">${esc((s.author && s.author.name) || '')}</div>
+        </div>
+      `).join('') : '<div class="muted">No stories yet. Add your first one.</div>';
+
+      library.innerHTML = pager + body;
+      const prev = document.getElementById('prevBtn');
+      const next = document.getElementById('nextBtn');
+      if (prev) prev.addEventListener('click', () => { page = Math.max(0, page-1); render(); });
+      if (next) next.addEventListener('click', () => { page = Math.min(totalPages-1, page+1); render(); });
+    }
+
+    async function api(path, opts = {}) {
+      const options = {...opts};
+      const method = String(options.method || 'GET').toUpperCase();
+      options.headers = new Headers(options.headers || {});
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+        options.headers.set('X-CSRF-Token', CSRF_TOKEN);
+      }
+      const res = await fetch(path, options);
+      if (!res.ok) {
+        let msg = 'Request failed';
+        try { msg = (await res.json()).detail || msg; } catch {}
+        throw new Error(msg);
+      }
+      return res.json();
+    }
+
+    function setupRecorder(buttonId, statusId, onTranscript) {
+      const MAX_AUDIO_BYTES = 3.8 * 1024 * 1024;
+      const MAX_RECORDING_MS = 5 * 60 * 1000;
+      const button = document.getElementById(buttonId);
+      const status = document.getElementById(statusId);
+      let recorder = null;
+      let stream = null;
+      let chunks = [];
+      let bytesRecorded = 0;
+      let stopTimer = null;
+
+      if (!navigator.mediaDevices || !window.MediaRecorder) {
+        button.disabled = true;
+        status.textContent = 'Voice recording is not supported in this browser';
+        return;
+      }
+
+      button.addEventListener('click', async () => {
+        if (recorder && recorder.state === 'recording') {
+          recorder.stop();
+          return;
+        }
+
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const preferred = [
+            'audio/webm;codecs=opus',
+            'audio/webm',
+            'audio/mp4'
+          ].find(type => MediaRecorder.isTypeSupported(type));
+          const options = { audioBitsPerSecond: 32000 };
+          if (preferred) options.mimeType = preferred;
+          recorder = new MediaRecorder(stream, options);
+          chunks = [];
+          bytesRecorded = 0;
+          recorder.addEventListener('dataavailable', e => {
+            if (!e.data.size) return;
+            chunks.push(e.data);
+            bytesRecorded += e.data.size;
+            if (bytesRecorded >= MAX_AUDIO_BYTES && recorder.state === 'recording') {
+              status.textContent = 'Recording limit reached. Preparing transcript...';
+              recorder.stop();
+            }
+          });
+          recorder.addEventListener('stop', async () => {
+            if (stopTimer) clearTimeout(stopTimer);
+            button.disabled = true;
+            button.classList.remove('recording');
+            button.textContent = buttonId === 'storyMicBtn' ? 'Record voice' : 'Record answer';
+            status.textContent = 'Transcribing...';
+            if (stream) stream.getTracks().forEach(t => t.stop());
+
+            try {
+              const mime = recorder.mimeType || 'audio/webm';
+              const ext = mime.includes('mp4') ? 'm4a' : 'webm';
+              const blob = new Blob(chunks, { type: mime });
+              const form = new FormData();
+              form.append('audio', blob, `memory-recording.${ext}`);
+              const result = await api('/api/transcribe', { method: 'POST', body: form });
+              onTranscript(result.text || '');
+              status.textContent = 'Transcript added';
+            } catch (e) {
+              status.textContent = e.message;
+            } finally {
+              button.disabled = false;
+              recorder = null;
+              chunks = [];
+            }
+          });
+          recorder.start(500);
+          stopTimer = setTimeout(() => {
+            if (recorder && recorder.state === 'recording') {
+              status.textContent = 'Five-minute limit reached. Preparing transcript...';
+              recorder.stop();
+            }
+          }, MAX_RECORDING_MS);
+          button.classList.add('recording');
+          button.textContent = 'Stop recording';
+          status.textContent = 'Listening...';
+        } catch (e) {
+          status.textContent = e.name === 'NotAllowedError' ? 'Microphone permission was denied' : e.message;
+          if (stream) stream.getTracks().forEach(t => t.stop());
+        }
+      });
+    }
+
+    function addInterviewBubble(role, text) {
+      const chat = document.getElementById('interviewChat');
+      const bubble = document.createElement('div');
+      bubble.className = `bubble ${role === 'user' ? 'user' : 'bot'}`;
+      bubble.textContent = text;
+      chat.appendChild(bubble);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function startInterview() {
+      const button = document.getElementById('startInterviewBtn');
+      button.disabled = true;
+      button.textContent = 'Starting...';
+      try {
+        const result = await api('/api/interviews', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ topic: document.getElementById('interviewTopic').value.trim() })
+        });
+        interviewId = result.interview_id;
+        document.getElementById('interviewStart').classList.add('hidden');
+        document.getElementById('interviewActive').classList.remove('hidden');
+        document.getElementById('interviewChat').innerHTML = '';
+        addInterviewBubble('assistant', result.reply);
+        document.getElementById('interviewInput').focus();
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Start conversation';
+      }
+    }
+
+    async function sendInterviewMessage() {
+      if (!interviewId) return;
+      const input = document.getElementById('interviewInput');
+      const message = input.value.trim();
+      if (!message) return;
+      const button = document.getElementById('sendInterviewBtn');
+      input.value = '';
+      addInterviewBubble('user', message);
+      button.disabled = true;
+      button.textContent = 'Thinking...';
+      try {
+        const result = await api(`/api/interviews/${interviewId}/messages`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ message })
+        });
+        addInterviewBubble('assistant', result.reply);
+      } catch (e) {
+        input.value = message;
+        alert(e.message);
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Send';
+        input.focus();
+      }
+    }
+
+    async function finishInterview() {
+      if (!interviewId) return;
+      const button = document.getElementById('finishInterviewBtn');
+      button.disabled = true;
+      button.textContent = 'Creating story...';
+      try {
+        const result = await api(`/api/interviews/${interviewId}/finalize`, { method: 'POST' });
+        addInterviewBubble('assistant', `Your story "${result.story.title}" has been saved.`);
+        interviewId = null;
+        await load();
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Create story from interview';
+      }
+    }
+
+    async function load() {
+      const me = await api('/api/me');
+      document.getElementById('meChip').textContent = me.user.name || 'Signed in';
+      const dash = await api('/api/dashboard');
+      document.getElementById('counts').textContent = `Stories: ${dash.counts.stories} / Family: ${dash.counts.family}`;
+      const fam = await api('/api/family');
+      document.getElementById('familyList').innerHTML = fam.family.length
+        ? fam.family.map(u => `<div style=\"margin-bottom:8px;\">${esc(u.name || 'Member')}</div>`).join('')
+        : 'None yet.';
+      const list = await api('/api/stories');
+      stories = (list.stories || []).map(s => ({...s, tags: s.tags || []}));
+      render();
+
+      const invite = sessionStorage.getItem('mw_family_invite');
+      if (invite) {
+        try {
+          await api('/api/family/accept', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token: invite }) });
+          sessionStorage.removeItem('mw_family_invite');
+          await load();
+        } catch (e) {
+          sessionStorage.removeItem('mw_family_invite');
+          alert(e.message);
+        }
+      }
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await api('/api/logout', { method:'POST' });
+      window.location.href = '/login';
+    });
+
+    document.getElementById('inviteBtn').addEventListener('click', async () => {
+      const inv = await api('/api/family/invite', { method:'POST' });
+      const link = window.location.origin + inv.url;
+      document.getElementById('inviteLink').innerHTML = `<a href=\"${esc(inv.url)}\">${esc(link)}</a>`;
+      try { await navigator.clipboard.writeText(link); } catch {}
+      alert('Invite link copied (if clipboard permissions allow).');
+    });
+
+    const modal = document.getElementById('composerModal');
+    document.getElementById('openComposerBtn').addEventListener('click', () => modal.classList.add('open'));
+    document.getElementById('closeComposerBtn').addEventListener('click', () => modal.classList.remove('open'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+
+    document.getElementById('openInterviewBtn').addEventListener('click', () => {
+      document.getElementById('interviewSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('interviewTopic').focus();
+    });
+    document.getElementById('startInterviewBtn').addEventListener('click', startInterview);
+    document.getElementById('sendInterviewBtn').addEventListener('click', sendInterviewMessage);
+    document.getElementById('finishInterviewBtn').addEventListener('click', finishInterview);
+    document.getElementById('interviewInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendInterviewMessage();
+      }
+    });
+
+    setupRecorder('storyMicBtn', 'storyMicStatus', text => {
+      const field = document.getElementById('storyContent');
+      field.value = [field.value.trim(), text.trim()].filter(Boolean).join(field.value.trim() ? '\n\n' : '');
+      field.focus();
+    });
+    setupRecorder('interviewMicBtn', 'interviewMicStatus', text => {
+      const field = document.getElementById('interviewInput');
+      field.value = [field.value.trim(), text.trim()].filter(Boolean).join(field.value.trim() ? ' ' : '');
+      field.focus();
+    });
+
+    document.getElementById('storyForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget;
+      const fd = new FormData(form);
+      const payload = {
+        kind: fd.get('kind') || 'memory',
+        title: fd.get('title') || '',
+        content: fd.get('content') || '',
+        tags: parseTags(fd.get('tags')),
+        year: (fd.get('year') && String(fd.get('year')).trim()) ? Number(fd.get('year')) : null
+      };
+      await api('/api/stories', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      form.reset();
+      document.getElementById('storyMicStatus').textContent = 'Microphone ready';
+      modal.classList.remove('open');
+      await load();
+    });
+
+    document.querySelectorAll('[data-jump]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-jump');
+        const el = id ? document.getElementById(id) : null;
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    load().catch((e) => {
+      alert(e.message);
+      window.location.href = '/login';
+    });
+  </script>
+</body>
+</html>

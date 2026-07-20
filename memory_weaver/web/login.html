@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Memory Weaver - Sign in</title>
+  <meta name="google-signin-client_id" content="{{GOOGLE_CLIENT_ID}}">
+  <meta name="csrf-token" content="{{CSRF_TOKEN}}">
+  <style>
+    :root { --bg:#fbf7f1; --ink:#1f1a17; --muted:#6d625b; --line:#eadfcd; --accent:#8c5e3c; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, Arial; background: var(--bg); color: var(--ink); }
+    .wrap { min-height: 100svh; display:flex; align-items:center; justify-content:center; padding: 22px; }
+    .card { width:min(820px,100%); background:#fff; border:1px solid var(--line); border-radius: 22px; padding: 22px; }
+    h1 { margin: 0 0 8px; letter-spacing: -.02em; }
+    p { margin: 0 0 14px; color: var(--muted); line-height: 1.6; }
+    .row { display:flex; gap: 14px; align-items:center; flex-wrap: wrap; }
+    .btn {
+      border: 0; border-radius: 16px; padding: 12px 16px;
+      background: linear-gradient(135deg, var(--accent), #c78b5a); color: #fff; font-weight: 800;
+      cursor: pointer;
+    }
+    .ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 10px; }
+    #gbtn { min-height: 44px; }
+  </style>
+  <script nonce="{{CSP_NONCE}}" src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Sign in with Google</h1>
+      <p>Memory Weaver uses Google sign-in only. After you sign in, you can add your own stories and connect family timelines.</p>
+      <div class="row">
+        <div id="gbtn"></div>
+        {{DEV_LOGIN_BLOCK}}
+        <a class="btn ghost" href="/">Back to demo</a>
+      </div>
+      <div class="hint">If the Google button does not render, check that your browser allows third-party scripts and you set <code>MW_GOOGLE_CLIENT_ID</code>.</div>
+    </div>
+  </div>
+
+  <script nonce="{{CSP_NONCE}}">
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+    function onCredentialResponse(response) {
+      fetch('/api/auth/google', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken},
+        body: JSON.stringify({ credential: response.credential })
+      }).then(async (r) => {
+        if (!r.ok) throw new Error((await r.json()).detail || 'Auth failed');
+        window.location.href = '/app';
+      }).catch((e) => alert(e.message));
+    }
+
+    window.addEventListener('load', () => {
+      const clientId = document.querySelector('meta[name="google-signin-client_id"]').content;
+      if (clientId && window.google && google.accounts && google.accounts.id) {
+        google.accounts.id.initialize({ client_id: clientId, callback: onCredentialResponse });
+        google.accounts.id.renderButton(
+          document.getElementById('gbtn'),
+          { theme: 'outline', size: 'large', width: 320 }
+        );
+      }
+
+      const dev = document.getElementById('devLoginBtn');
+      if (dev) {
+        dev.addEventListener('click', async () => {
+          const res = await fetch('/api/dev-login', {
+            method: 'POST',
+            headers: {'X-CSRF-Token': csrfToken}
+          });
+          if (!res.ok) return alert('Local test login is disabled');
+          window.location.href = '/app';
+        });
+      }
+    });
+  </script>
+</body>
+</html>

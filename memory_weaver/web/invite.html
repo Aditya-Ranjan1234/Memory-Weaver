@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Memory Weaver - Family Invite</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, Arial; margin: 0; padding: 22px; background: #fbf7f1; color: #1f1a17; }
+    .card { max-width: 680px; margin: 12vh auto 0; background: #fff; border: 1px solid #eadfcd; border-radius: 18px; padding: 22px; }
+    a { display: inline-block; border-radius: 14px; padding: 12px 16px; background: #8c5e3c; color: #fff; font-weight: 800; text-decoration: none; }
+    p { color: #6d625b; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Join your family archive</h1>
+    <p id="inviteStatus">Your private invitation is ready. Sign in to connect your family stories and timeline.</p>
+    <a id="continueLink" href="{{DESTINATION}}">Continue to Memory Weaver</a>
+  </main>
+  <script nonce="{{CSP_NONCE}}">
+    const token = decodeURIComponent(window.location.hash.slice(1));
+    if (/^[A-Za-z0-9_-]{20,255}$/.test(token)) {
+      sessionStorage.setItem('mw_family_invite', token);
+      history.replaceState(null, '', '/invite');
+    } else {
+      document.getElementById('inviteStatus').textContent = 'This invitation link is incomplete or invalid.';
+      document.getElementById('continueLink').textContent = 'Open Memory Weaver';
+    }
+  </script>
+</body>
+</html>
