@@ -7,35 +7,74 @@
   <meta name="google-signin-client_id" content="{{GOOGLE_CLIENT_ID}}">
   <meta name="csrf-token" content="{{CSRF_TOKEN}}">
   <style>
-    :root { --bg:#fbf7f1; --ink:#1f1a17; --muted:#6d625b; --line:#eadfcd; --accent:#8c5e3c; }
-    body { margin:0; font-family: ui-sans-serif, system-ui, Arial; background: var(--bg); color: var(--ink); }
-    .wrap { min-height: 100svh; display:flex; align-items:center; justify-content:center; padding: 22px; }
-    .card { width:min(820px,100%); background:#fff; border:1px solid var(--line); border-radius: 22px; padding: 22px; }
-    h1 { margin: 0 0 8px; letter-spacing: -.02em; }
-    p { margin: 0 0 14px; color: var(--muted); line-height: 1.6; }
-    .row { display:flex; gap: 14px; align-items:center; flex-wrap: wrap; }
+    :root { --bg:#f5eee4; --ink:#1f1a17; --muted:#6d625b; --line:#e7d8c4; --accent:#8c5e3c; --forest:#2f4d3b; }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; min-height:100svh; color:var(--ink);
+      font-family:"Trebuchet MS", "Gill Sans", sans-serif;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(140,94,60,.18), transparent 30%),
+        radial-gradient(circle at 90% 90%, rgba(47,77,59,.13), transparent 28%),
+        var(--bg);
+    }
+    .wrap { min-height:100svh; display:grid; place-items:center; padding:clamp(18px,4vw,48px); }
+    .card {
+      width:min(1040px,100%); display:grid; grid-template-columns:1.08fr .92fr; overflow:hidden;
+      background:rgba(255,252,247,.94); border:1px solid var(--line); border-radius:30px;
+      box-shadow:0 28px 90px rgba(65,42,27,.14);
+    }
+    .story-panel { padding:clamp(30px,6vw,70px); background:linear-gradient(145deg,#2f4d3b,#1e392c); color:#fff; }
+    .signin-panel { padding:clamp(30px,6vw,70px); display:flex; flex-direction:column; justify-content:center; }
+    .brand { color:#f7dfbd; text-decoration:none; font-size:13px; font-weight:800; letter-spacing:.18em; text-transform:uppercase; }
+    .eyebrow { margin:54px 0 12px; color:#d9b786; font-size:12px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }
+    h1, h2 { font-family:Georgia, "Times New Roman", serif; letter-spacing:-.035em; }
+    h1 { margin:0; max-width:10ch; font-size:clamp(42px,6vw,72px); line-height:.98; }
+    h2 { margin:8px 0 12px; font-size:clamp(32px,4vw,46px); }
+    p { margin:0 0 18px; color:var(--muted); line-height:1.65; }
+    .story-panel p { margin-top:24px; max-width:42ch; color:rgba(255,255,255,.76); }
+    .kicker { color:var(--accent); font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+    .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:8px; }
     .btn {
       border: 0; border-radius: 16px; padding: 12px 16px;
       background: linear-gradient(135deg, var(--accent), #c78b5a); color: #fff; font-weight: 800;
       cursor: pointer;
     }
-    .ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
-    .hint { font-size: 12px; color: var(--muted); margin-top: 10px; }
-    #gbtn { min-height: 44px; }
+    .ghost { background:#fff; color:var(--ink); border:1px solid var(--line); }
+    .back { display:inline-flex; margin-top:24px; color:var(--forest); font-weight:800; text-underline-offset:4px; }
+    .privacy { margin:18px 0 0; font-size:13px; }
+    .status { min-height:20px; margin-top:12px; color:#8a3f35; font-size:13px; }
+    #gbtn { min-height:44px; max-width:100%; }
+    @media (max-width:760px) {
+      .card { grid-template-columns:1fr; }
+      .story-panel { padding:30px; }
+      .eyebrow { margin-top:30px; }
+      h1 { font-size:42px; }
+      .signin-panel { padding:32px 24px 36px; }
+    }
   </style>
   <script nonce="{{CSP_NONCE}}" src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>Sign in with Google</h1>
-      <p>Memory Weaver uses Google sign-in only. After you sign in, you can add your own stories and connect family timelines.</p>
-      <div class="row">
-        <div id="gbtn"></div>
-        {{DEV_LOGIN_BLOCK}}
-        <a class="btn ghost" href="/">Back to demo</a>
-      </div>
-      <div class="hint">If the Google button does not render, check that your browser allows third-party scripts and you set <code>MW_GOOGLE_CLIENT_ID</code>.</div>
+      <section class="story-panel">
+        <a class="brand" href="/">Memory Weaver</a>
+        <div class="eyebrow">Family stories, safely kept</div>
+        <h1>Your family history has a home.</h1>
+        <p>Gather the voices, recipes, journeys, and small details that make your family yours.</p>
+      </section>
+      <section class="signin-panel">
+        <span class="kicker">Welcome</span>
+        <h2>Open your archive</h2>
+        <p>Continue with Google to preserve stories and connect with the relatives you invite.</p>
+        <div class="row">
+          <div id="gbtn"></div>
+          {{DEV_LOGIN_BLOCK}}
+        </div>
+        <p class="privacy">Your archive is private by default. Family access is granted only through invitations you create.</p>
+        <div class="status" id="signinStatus" aria-live="polite"></div>
+        <a class="back" href="/">Explore public stories</a>
+      </section>
     </div>
   </div>
 
@@ -48,9 +87,9 @@
         headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken},
         body: JSON.stringify({ credential: response.credential })
       }).then(async (r) => {
-        if (!r.ok) throw new Error((await r.json()).detail || 'Auth failed');
+        if (!r.ok) throw new Error('We could not sign you in. Please try again.');
         window.location.href = '/app';
-      }).catch((e) => alert(e.message));
+      }).catch((e) => { document.getElementById('signinStatus').textContent = e.message; });
     }
 
     window.addEventListener('load', () => {
@@ -61,6 +100,8 @@
           document.getElementById('gbtn'),
           { theme: 'outline', size: 'large', width: 320 }
         );
+      } else {
+        document.getElementById('signinStatus').textContent = 'Sign-in is temporarily unavailable. Please try again shortly.';
       }
 
       const dev = document.getElementById('devLoginBtn');
@@ -70,7 +111,10 @@
             method: 'POST',
             headers: {'X-CSRF-Token': csrfToken}
           });
-          if (!res.ok) return alert('Local test login is disabled');
+          if (!res.ok) {
+            document.getElementById('signinStatus').textContent = 'This sign-in option is unavailable.';
+            return;
+          }
           window.location.href = '/app';
         });
       }

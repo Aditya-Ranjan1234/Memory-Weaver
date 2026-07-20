@@ -1,4 +1,4 @@
-const CACHE_NAME = "memory-weaver-v3";
+const CACHE_NAME = "memory-weaver-v4";
 const ASSETS = [
   "/",
   "/index.html",

@@ -159,6 +159,7 @@ class MemoryWeaverTests(unittest.TestCase):
         self.assertEqual(self.client.get("/api/stories").status_code, 401)
 
     def test_all_pages_and_static_assets(self) -> None:
+        anonymous = TestClient(app)
         expected = {
             "/": "text/html",
             "/index.html": "text/html",
@@ -173,20 +174,43 @@ class MemoryWeaverTests(unittest.TestCase):
         }
         for path, content_type in expected.items():
             with self.subTest(path=path):
-                response = self.client.get(path)
+                client = self.client if path == "/app" else anonymous
+                response = client.get(path)
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(content_type, response.headers["content-type"])
 
-        landing = self.client.get("/").text
+        landing = anonymous.get("/").text
         self.assertIn('class="auth-link" href="/login">Sign in</a>', landing)
-        self.assertIn('id="logoutBtn"', self.client.get("/app").text)
+        self.assertNotIn("Live build", landing)
+        self.assertNotIn("demo", landing.lower())
+
+        login = anonymous.get("/login").text
+        self.assertNotIn("MW_GOOGLE_CLIENT_ID", login)
+        self.assertNotIn("third-party scripts", login)
+        self.assertIn("Your archive is private by default", login)
+
+        private_app = self.client.get("/app").text
+        self.assertIn('id="logoutBtn"', private_app)
+        self.assertNotIn("OpenAI", private_app)
+        self.assertEqual(
+            self.client.get("/login", follow_redirects=False).headers["location"],
+            "/app",
+        )
+
+        with (
+            patch("memory_weaver.app.GOOGLE_CLIENT_ID", ""),
+            patch("memory_weaver.app.LOCAL_DEV_AUTH", False),
+        ):
+            unavailable = anonymous.get("/login")
+        self.assertEqual(unavailable.status_code, 200)
+        self.assertIn("Sign-in is taking a short pause", unavailable.text)
+        self.assertNotIn("MW_GOOGLE_CLIENT_ID", unavailable.text)
 
         service_worker = self.client.get("/sw.js").text
-        self.assertIn('const CACHE_NAME = "memory-weaver-v3"', service_worker)
+        self.assertIn('const CACHE_NAME = "memory-weaver-v4"', service_worker)
         self.assertIn("!STATIC_PATHS.has(url.pathname)", service_worker)
         self.assertIn('url.pathname === "/"', service_worker)
 
-        anonymous = TestClient(app)
         self.assertEqual(
             anonymous.get("/app", follow_redirects=False).status_code,
             307,

@@ -181,7 +181,9 @@ def user_dict(user: User) -> dict[str, Any]:
 def require_user(request: Request) -> dict[str, Any]:
     user = user_from_session(request)
     if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(
+            status_code=401, detail="Your session has ended. Please sign in again."
+        )
     return user
 
 
@@ -237,7 +239,7 @@ def get_openai_client() -> OpenAI:
     if not OPENAI_API_KEY:
         raise HTTPException(
             status_code=503,
-            detail="OPENAI_API_KEY is not set. Add it to your terminal environment and restart the server.",
+            detail="Guided storytelling is temporarily unavailable. Please try again later.",
         )
     return OpenAI(api_key=OPENAI_API_KEY)
 
@@ -335,18 +337,22 @@ def service_worker() -> FileResponse:
 @app.get("/index.html", response_class=HTMLResponse, include_in_schema=False)
 def landing(request: Request) -> str:
     nonce = request.state.csp_nonce
-    return read_text(PUBLIC_DIR / "index.html").replace(
-        "<script", f'<script nonce="{nonce}"'
-    )
+    page = read_text(PUBLIC_DIR / "index.html")
+    if user_from_session(request):
+        page = page.replace('href="/login">Sign in</a>', 'href="/app">Open archive</a>')
+        page = page.replace(
+            'href="/login" aria-label="Sign in to add a story"',
+            'href="/app" aria-label="Open your archive to add a story"',
+        )
+    return page.replace("<script", f'<script nonce="{nonce}"')
 
 
 @app.get("/login", response_class=HTMLResponse)
 def login(request: Request) -> str:
+    if user_from_session(request):
+        return RedirectResponse(url="/app")
     if not GOOGLE_CLIENT_ID and not LOCAL_DEV_AUTH:
-        return render_template(
-            WEB_DIR / "missing_client_id.html",
-            HOWTO=read_text(WEB_DIR / "google_setup.txt"),
-        )
+        return render_template(WEB_DIR / "missing_client_id.html")
     dev_block = (
         '<button type="button" class="btn ghost" id="devLoginBtn">Local test login</button>'
         if LOCAL_DEV_AUTH
@@ -392,7 +398,10 @@ def auth_google(
     _: None = Depends(verify_csrf),
 ) -> JSONResponse:
     if not GOOGLE_CLIENT_ID:
-        raise HTTPException(status_code=500, detail="MW_GOOGLE_CLIENT_ID not set")
+        raise HTTPException(
+            status_code=503,
+            detail="Sign-in is temporarily unavailable. Please try again later.",
+        )
     try:
         info = google_id_token.verify_oauth2_token(
             payload.credential,
@@ -406,9 +415,9 @@ def auth_google(
 
     sub = str(info.get("sub") or "")
     if not sub:
-        raise HTTPException(status_code=401, detail="Google token missing sub")
+        raise HTTPException(status_code=401, detail="We could not verify this account")
     if info.get("email") and not info.get("email_verified", False):
-        raise HTTPException(status_code=401, detail="Google email is not verified")
+        raise HTTPException(status_code=401, detail="Please use a verified account")
 
     email = info.get("email")
     name = info.get("name") or info.get("given_name") or "User"
@@ -475,7 +484,9 @@ def dev_login(request: Request, _: None = Depends(verify_csrf)) -> JSONResponse:
 def me(request: Request) -> JSONResponse:
     user = user_from_session(request)
     if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(
+            status_code=401, detail="Your session has ended. Please sign in again."
+        )
     return JSONResponse({"user": user})
 
 
@@ -574,10 +585,12 @@ async def transcribe_audio(
     enforce_rate_limit(int(user["id"]), "transcribe", 20, 3600)
     content_type = (audio.content_type or "").lower()
     if content_type not in ALLOWED_AUDIO_TYPES:
-        raise HTTPException(status_code=415, detail="Unsupported audio type")
+        raise HTTPException(
+            status_code=415, detail="This recording format is not supported."
+        )
     content = await audio.read(MAX_AUDIO_BYTES + 1)
     if not content:
-        raise HTTPException(status_code=400, detail="Audio recording is empty")
+        raise HTTPException(status_code=400, detail="No audio was captured.")
     if len(content) > MAX_AUDIO_BYTES:
         raise HTTPException(
             status_code=413, detail="Audio recording is too large (maximum 4 MB)"
@@ -597,7 +610,7 @@ async def transcribe_audio(
     except Exception:
         raise HTTPException(
             status_code=502,
-            detail="Transcription failed. Check OPENAI_API_KEY, billing, and model access in the server terminal.",
+            detail="We could not transcribe this recording. Please try again in a moment.",
         )
 
     text = getattr(result, "text", None) or str(result)
@@ -614,7 +627,9 @@ def get_interview_for_user(
         )
     )
     if not interview:
-        raise HTTPException(status_code=404, detail="Interview not found")
+        raise HTTPException(
+            status_code=404, detail="This interview is no longer available."
+        )
     return interview
 
 
@@ -654,7 +669,7 @@ def start_interview(
     except Exception:
         raise HTTPException(
             status_code=502,
-            detail="Interview could not start. Check OPENAI_API_KEY, billing, and model access in the server terminal.",
+            detail="The guided interview is unavailable right now. Please try again later.",
         )
 
     with db_session() as session:
@@ -711,7 +726,7 @@ def continue_interview(
     except Exception:
         raise HTTPException(
             status_code=502,
-            detail="The interviewer could not respond. Check the OpenAI configuration and try again.",
+            detail="The interviewer could not respond just now. Your answer is still here; please try again.",
         )
 
     with db_session() as session:
@@ -794,13 +809,16 @@ Transcript:
     except Exception:
         raise HTTPException(
             status_code=502,
-            detail="Story generation failed. Check the OpenAI configuration and try again.",
+            detail="We could not shape this interview into a story just now. Please try again later.",
         )
 
     title = str(draft.get("title") or topic or "A Family Memory").strip()[:140]
     content = str(draft.get("content") or "").strip()
     if not content:
-        raise HTTPException(status_code=502, detail="OpenAI returned an empty story")
+        raise HTTPException(
+            status_code=502,
+            detail="We could not complete this story. Please try again.",
+        )
     tags = [str(t).strip() for t in (draft.get("tags") or []) if str(t).strip()][:8]
     year = draft.get("year") if isinstance(draft.get("year"), int) else None
     now = int(time.time())
@@ -885,14 +903,21 @@ def accept_invite(
             .with_for_update()
         )
         if not invite:
-            raise HTTPException(status_code=404, detail="Invite not found")
+            raise HTTPException(status_code=404, detail="This invitation is invalid.")
         if invite.accepted_by_user_id:
-            raise HTTPException(status_code=400, detail="Invite already used")
+            raise HTTPException(
+                status_code=400, detail="This invitation has already been accepted."
+            )
         if invite.expires_at < now:
-            raise HTTPException(status_code=400, detail="Invite has expired")
+            raise HTTPException(
+                status_code=400,
+                detail="This invitation has expired. Ask your relative for a new one.",
+            )
         from_uid = int(invite.from_user_id)
         if from_uid == uid:
-            raise HTTPException(status_code=400, detail="Cannot accept your own invite")
+            raise HTTPException(
+                status_code=400, detail="You cannot accept your own invitation."
+            )
 
         invite.accepted_by_user_id = uid
         invite.accepted_at = now

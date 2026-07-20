@@ -20,7 +20,7 @@
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      font-family: "Trebuchet MS", "Gill Sans", sans-serif;
       color: var(--ink);
       min-height: 100svh;
       background:
@@ -51,7 +51,7 @@
     @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
 
     .panel { padding: 18px; }
-    h2 { margin: 0 0 10px; font-size: 22px; }
+    h2 { margin: 0 0 10px; font: 700 24px/1.1 Georgia, "Times New Roman", serif; letter-spacing: -.025em; }
     .muted { color: var(--muted); }
     .tiny { font-size: 12px; color: var(--muted); }
     .toolbar { display:flex; gap: 10px; flex-wrap: wrap; }
@@ -119,6 +119,15 @@
       .interview-start, .interview-compose { grid-template-columns:1fr; }
       .bubble { max-width:94%; }
     }
+    @media (max-width: 560px) {
+      .wrap { padding:12px; padding-bottom:calc(92px + env(safe-area-inset-bottom)); }
+      .topbar { align-items:stretch; flex-direction:column; padding:16px; }
+      .brand { justify-content:space-between; }
+      .topbar .toolbar { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+      .topbar .btn { width:100%; padding:11px 9px; }
+      .panel { padding:16px; }
+      .itemhead { flex-direction:column; gap:5px; }
+    }
   </style>
 </head>
 <body>
@@ -130,7 +139,7 @@
       </div>
       <div class="toolbar">
         <button class="btn ghost" id="inviteBtn" type="button">Invite family</button>
-        <button class="btn ghost" id="openInterviewBtn" type="button">AI interview</button>
+        <button class="btn ghost" id="openInterviewBtn" type="button">Guided interview</button>
         <button class="btn" id="openComposerBtn" type="button">Add story</button>
         <button class="btn ghost" id="logoutBtn" type="button">Logout</button>
       </div>
@@ -141,7 +150,7 @@
         <div style="display:flex; justify-content: space-between; gap: 12px; align-items: end;">
           <div>
             <h2>Stories</h2>
-            <div class="tiny">Your stories plus connected family (once accepted).</div>
+            <div class="tiny">Your memories and stories shared by connected relatives.</div>
           </div>
           <div class="tiny" id="counts"></div>
         </div>
@@ -151,10 +160,10 @@
 
       <aside class="card panel" id="familySection">
         <h2>Family</h2>
-        <div class="muted" style="margin-bottom:10px;">Invite relatives and combine timelines.</div>
+        <div class="muted" style="margin-bottom:10px;">Bring trusted relatives into one shared family archive.</div>
         <div class="item">
           <div class="tiny" style="margin-bottom:6px;">Invite link</div>
-          <div class="muted" id="inviteLink">Create an invite to get a shareable link.</div>
+          <div class="muted" id="inviteLink">Create a private invitation when you are ready.</div>
         </div>
         <div style="height:12px;"></div>
         <div class="item">
@@ -170,7 +179,7 @@
           <h2>Memory Interview</h2>
           <div class="muted">A natural interviewer that listens, follows details, and helps shape a fuller story.</div>
         </div>
-        <span class="chip">OpenAI</span>
+        <span class="chip">Guided conversation</span>
       </div>
 
       <div id="interviewStart" style="margin-top:14px;">
@@ -311,7 +320,7 @@
       }
       const res = await fetch(path, options);
       if (!res.ok) {
-        let msg = 'Request failed';
+        let msg = 'Something went wrong. Please try again.';
         try { msg = (await res.json()).detail || msg; } catch {}
         throw new Error(msg);
       }
@@ -486,7 +495,7 @@
       const me = await api('/api/me');
       document.getElementById('meChip').textContent = me.user.name || 'Signed in';
       const dash = await api('/api/dashboard');
-      document.getElementById('counts').textContent = `Stories: ${dash.counts.stories} / Family: ${dash.counts.family}`;
+      document.getElementById('counts').textContent = `${dash.counts.stories} stories · ${dash.counts.family} relatives`;
       const fam = await api('/api/family');
       document.getElementById('familyList').innerHTML = fam.family.length
         ? fam.family.map(u => `<div style=\"margin-bottom:8px;\">${esc(u.name || 'Member')}</div>`).join('')
