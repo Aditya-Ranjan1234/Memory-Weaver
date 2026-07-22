@@ -11,8 +11,14 @@ from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import urlparse
 
-from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    RedirectResponse,
+    Response,
+)
 from openai import OpenAI
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import delete, func, select
@@ -31,6 +37,7 @@ from memory_weaver.database import (
     Invite,
     RateLimitEvent,
     Story,
+    StoryImage,
     User,
     db_session,
     init_local_database,
@@ -69,6 +76,7 @@ ALLOWED_HOSTS = [
 ]
 INVITE_TTL_SECONDS = 7 * 24 * 60 * 60
 MAX_AUDIO_BYTES = 4 * 1024 * 1024
+MAX_IMAGE_BYTES = 3 * 1024 * 1024
 ALLOWED_AUDIO_TYPES = {
     "audio/m4a",
     "audio/mp4",
@@ -81,22 +89,68 @@ ALLOWED_AUDIO_TYPES = {
 }
 
 INTERVIEWER_INSTRUCTIONS = """
-You are Memory Weaver, a warm oral-history interviewer helping a person preserve a true personal or family memory.
+You are Memory Weaver, an attentive oral-history companion helping someone preserve one true personal or family memory through a relaxed conversation.
 
 Conversation rules:
-- Sound natural, attentive, and human. Never sound like a questionnaire or therapist.
-- Ask exactly one short follow-up question per reply.
-- Begin with a brief, genuine reflection on one concrete detail the person just shared, then ask the question.
+- Write like a thoughtful person in a real chat, not a questionnaire, therapist, customer-support agent, or motivational coach.
+- Keep each reply to one or two sentences and no more than 45 words.
+- Ask exactly one question per reply. Make it easy to answer.
+- Ground every follow-up in a specific person, object, phrase, place, action, or feeling from the person's latest answer.
+- Acknowledge a detail only when it adds meaning. Do not praise the person or pad the reply with enthusiasm.
+- Never use generic phrases such as "I'm looking forward to hearing your stories", "thank you for sharing", "that sounds wonderful", "I'd love to hear more", or "meaningful or significant".
 - Match the person's language and level of formality. If they mix languages, follow their style naturally.
 - Never invent facts, names, emotions, dates, or motivations. Gently clarify uncertainty instead.
-- Explore the people present, sensory details, place, sequence, emotion, stakes, cultural context, and what changed afterward.
-- Do not repeat a question already answered. Prefer specific questions over broad ones.
+- Move through the memory naturally: first establish the scene, then people and sensory detail, then what happened, then why it stayed with them. Do not force every stage.
+- Do not repeat a question or ask for information already given. Prefer concrete questions over broad reflection.
 - Respect boundaries immediately. If the person declines a topic, move on without pressure.
-- After enough detail has emerged, ask whether they want to add anything else before turning it into a story.
+- Once the scene, people, sequence, and meaning are clear, say briefly that there is enough to shape the memory and ask whether anything important is missing.
 - Do not summarize the whole interview unless the person asks. Do not produce a title or final story during the interview.
 
 Return only your conversational reply, with no labels or markdown headings.
 """.strip()
+
+
+def detect_image_mime(content: bytes) -> str | None:
+    if content.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if content.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if len(content) >= 12 and content[:4] == b"RIFF" and content[8:12] == b"WEBP":
+        return "image/webp"
+    return None
+
+
+def validate_story_image(upload: UploadFile, content: bytes) -> tuple[str, str]:
+    if not content:
+        raise HTTPException(status_code=400, detail="Choose an image to upload.")
+    if len(content) > MAX_IMAGE_BYTES:
+        raise HTTPException(status_code=413, detail="Images must be smaller than 3 MB.")
+
+    detected_type = detect_image_mime(content)
+    if not detected_type:
+        raise HTTPException(
+            status_code=415, detail="Choose a JPEG, PNG, or WebP image."
+        )
+    reported_type = (upload.content_type or "").lower().split(";", 1)[0].strip()
+    if reported_type == "image/jpg":
+        reported_type = "image/jpeg"
+    if reported_type not in {"", "application/octet-stream", detected_type}:
+        raise HTTPException(
+            status_code=415, detail="The image format does not match the file."
+        )
+
+    unsafe_name = (upload.filename or "story-image").replace("\\", "/")
+    original_name = Path(unsafe_name).name.replace("\x00", "")[:255]
+    return detected_type, original_name or "story-image"
+
+
+def accessible_story_owner_ids(session: Session, user_id: int) -> list[int]:
+    return [
+        user_id,
+        *session.scalars(
+            select(FamilyLink.relative_user_id).where(FamilyLink.user_id == user_id)
+        ),
+    ]
 
 
 def read_text(path: Path) -> str:
@@ -293,7 +347,7 @@ async def same_origin_posts(request: Request, call_next):
         "style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style "
         "https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com data:; "
-        "img-src 'self' data: https:; "
+        "img-src 'self' data: blob: https:; "
         "connect-src 'self' https://accounts.google.com/gsi/; "
         "frame-src https://accounts.google.com/gsi/; "
         "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
@@ -521,17 +575,12 @@ def list_stories(request: Request, scope: str = "family") -> JSONResponse:
     user = require_user(request)
     uid = int(user["id"])
 
-    ids = [uid]
     with db_session() as session:
-        if scope != "me":
-            ids.extend(
-                session.scalars(
-                    select(FamilyLink.relative_user_id).where(FamilyLink.user_id == uid)
-                )
-            )
+        ids = [uid] if scope == "me" else accessible_story_owner_ids(session, uid)
         rows = session.execute(
-            select(Story, User)
+            select(Story, User, StoryImage.story_id)
             .join(User, User.id == Story.user_id)
+            .outerjoin(StoryImage, StoryImage.story_id == Story.id)
             .where(Story.user_id.in_(ids))
             .order_by(Story.created_at.desc(), Story.id.desc())
         ).all()
@@ -544,9 +593,12 @@ def list_stories(request: Request, scope: str = "family") -> JSONResponse:
                 "tags": story.tags_json or [],
                 "year": story.year,
                 "created_at": story.created_at,
+                "image_url": (
+                    f"/api/stories/{story.id}/image" if image_story_id else None
+                ),
                 "author": {"name": author.name, "picture": author.picture},
             }
-            for story, author in rows
+            for story, author, image_story_id in rows
         ]
     return JSONResponse({"stories": out})
 
@@ -575,6 +627,128 @@ def create_story(
     return JSONResponse({"status": "ok", "id": story_id})
 
 
+@app.post("/api/stories/with-image")
+async def create_story_with_image(
+    request: Request,
+    kind: str = Form("memory"),
+    title: str = Form(...),
+    content: str = Form(...),
+    tags: str = Form(""),
+    year: str = Form(""),
+    image: UploadFile = File(...),
+    _: None = Depends(verify_csrf),
+) -> JSONResponse:
+    user = require_user(request)
+    uid = int(user["id"])
+    enforce_rate_limit(uid, "image_upload", 30, 3600)
+    try:
+        parsed_year = int(year) if year.strip() else None
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Enter a valid year.")
+    payload = StoryIn(
+        kind=kind,
+        title=title,
+        content=content,
+        tags=[tag.strip() for tag in tags.split(",") if tag.strip()],
+        year=parsed_year,
+    )
+    image_content = await image.read(MAX_IMAGE_BYTES + 1)
+    mime_type, original_name = validate_story_image(image, image_content)
+    now = int(time.time())
+    with db_session() as session:
+        story = Story(
+            user_id=uid,
+            kind=payload.kind,
+            title=payload.title,
+            content=payload.content,
+            tags_json=payload.tags,
+            year=payload.year,
+            created_at=now,
+        )
+        session.add(story)
+        session.flush()
+        session.add(
+            StoryImage(
+                story_id=story.id,
+                mime_type=mime_type,
+                original_name=original_name,
+                image_data=image_content,
+                byte_size=len(image_content),
+                created_at=now,
+            )
+        )
+        story_id = story.id
+    return JSONResponse(
+        {
+            "status": "ok",
+            "id": story_id,
+            "image_url": f"/api/stories/{story_id}/image",
+        }
+    )
+
+
+@app.post("/api/stories/{story_id}/image")
+async def upload_story_image(
+    story_id: int,
+    request: Request,
+    image: UploadFile = File(...),
+    _: None = Depends(verify_csrf),
+) -> JSONResponse:
+    user = require_user(request)
+    uid = int(user["id"])
+    enforce_rate_limit(uid, "image_upload", 30, 3600)
+    content = await image.read(MAX_IMAGE_BYTES + 1)
+    detected_type, original_name = validate_story_image(image, content)
+    now = int(time.time())
+    with db_session() as session:
+        story = session.scalar(
+            select(Story).where(Story.id == story_id, Story.user_id == uid)
+        )
+        if not story:
+            raise HTTPException(status_code=404, detail="Story not found")
+        stored = session.get(StoryImage, story_id)
+        if stored:
+            stored.mime_type = detected_type
+            stored.original_name = original_name
+            stored.image_data = content
+            stored.byte_size = len(content)
+            stored.created_at = now
+        else:
+            session.add(
+                StoryImage(
+                    story_id=story_id,
+                    mime_type=detected_type,
+                    original_name=original_name,
+                    image_data=content,
+                    byte_size=len(content),
+                    created_at=now,
+                )
+            )
+    return JSONResponse({"status": "ok", "image_url": f"/api/stories/{story_id}/image"})
+
+
+@app.get("/api/stories/{story_id}/image")
+def get_story_image(story_id: int, request: Request) -> Response:
+    user = require_user(request)
+    uid = int(user["id"])
+    with db_session() as session:
+        owner_ids = accessible_story_owner_ids(session, uid)
+        stored = session.scalar(
+            select(StoryImage)
+            .join(Story, Story.id == StoryImage.story_id)
+            .where(StoryImage.story_id == story_id, Story.user_id.in_(owner_ids))
+        )
+        if not stored:
+            raise HTTPException(status_code=404, detail="Image not found")
+        image_data = stored.image_data
+        mime_type = stored.mime_type
+    return Response(
+        content=image_data,
+        media_type=mime_type,
+        headers={"Cache-Control": "private, max-age=3600"},
+    )
+
+
 @app.post("/api/transcribe")
 async def transcribe_audio(
     request: Request,
@@ -583,7 +757,7 @@ async def transcribe_audio(
 ) -> JSONResponse:
     user = require_user(request)
     enforce_rate_limit(int(user["id"]), "transcribe", 20, 3600)
-    content_type = (audio.content_type or "").lower()
+    content_type = (audio.content_type or "").lower().split(";", 1)[0].strip()
     if content_type not in ALLOWED_AUDIO_TYPES:
         raise HTTPException(
             status_code=415, detail="This recording format is not supported."
@@ -634,12 +808,15 @@ def get_interview_for_user(
 
 
 def interview_history(session: Session, session_id: int) -> list[dict[str, str]]:
-    rows = session.scalars(
-        select(InterviewMessage)
-        .where(InterviewMessage.session_id == session_id)
-        .order_by(InterviewMessage.id.asc())
-        .limit(40)
+    rows = list(
+        session.scalars(
+            select(InterviewMessage)
+            .where(InterviewMessage.session_id == session_id)
+            .order_by(InterviewMessage.id.desc())
+            .limit(40)
+        )
     )
+    rows.reverse()
     return [{"role": row.role, "content": row.content} for row in rows]
 
 
@@ -654,9 +831,9 @@ def start_interview(
     topic = payload.topic.strip()
     now = int(time.time())
     start_prompt = (
-        f"The person would like to preserve a memory about: {topic}. Open the interview naturally with one inviting question."
+        f'The person wants to talk about "{topic}". Begin immediately with one relaxed, concrete question that helps place them inside a specific moment. Do not greet them or express excitement.'
         if topic
-        else "Open a new oral-history interview naturally. Help the person choose one meaningful memory and ask exactly one inviting question."
+        else "Begin immediately with one relaxed question that helps the person choose a specific moment to revisit. Do not greet them, praise them, or say you are looking forward to their stories."
     )
     try:
         response = get_openai_client().responses.create(

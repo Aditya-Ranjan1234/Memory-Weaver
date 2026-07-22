@@ -58,6 +58,7 @@
     .list { display: grid; gap: 12px; }
     .item { padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: rgba(255,255,255,.72); }
     .itemhead { display:flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .story-photo { width:100%; max-height:360px; object-fit:cover; display:block; margin-bottom:14px; border-radius:14px; background:#eee4d6; }
     .tagrow { display:flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
     .tag { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #f4eadc; color: #6d4b2a; }
     .pagerbar { display:flex; align-items:center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
@@ -75,15 +76,47 @@
     .record-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
     .record-status { font-size:12px; color:var(--muted); }
     .btn.recording { background:#a63f3f; box-shadow:0 0 0 5px rgba(166,63,63,.12); }
-    .interview-panel { margin-top:14px; }
-    .interview-start { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; }
-    .interview-chat { display:grid; gap:12px; max-height:520px; overflow:auto; padding:14px 4px; scroll-behavior:smooth; }
-    .bubble { max-width:min(720px,88%); padding:12px 14px; border-radius:18px; line-height:1.6; white-space:pre-wrap; }
-    .bubble.bot { justify-self:start; background:#fff; border:1px solid var(--line); border-bottom-left-radius:6px; }
-    .bubble.user { justify-self:end; background:#2f4d3b; color:#fff; border-bottom-right-radius:6px; }
-    .interview-compose { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:end; }
-    .interview-compose textarea { min-height:72px; }
-    .interview-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .image-upload { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px; border:1px dashed #cdbda7; border-radius:16px; background:#fff; cursor:pointer; }
+    .image-upload input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+    .image-upload strong { display:block; color:var(--ink); margin-bottom:3px; }
+    .image-upload small { color:var(--muted); }
+    .image-upload-mark { display:grid; place-items:center; width:42px; height:42px; flex:0 0 auto; border-radius:13px; background:#edf4ee; color:#2f4d3b; font-size:21px; }
+    .image-preview { position:relative; margin-top:10px; border-radius:16px; overflow:hidden; border:1px solid var(--line); background:#fff; }
+    .image-preview img { width:100%; max-height:260px; display:block; object-fit:cover; }
+    .image-preview button { position:absolute; top:10px; right:10px; }
+    .form-status { min-height:18px; margin-top:10px; font-size:13px; color:#8a3f35; }
+
+    .interview-panel { margin-top:14px; padding:0; overflow:hidden; }
+    .interview-head { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; padding:22px; border-bottom:1px solid var(--line); }
+    .interview-body { padding:20px; }
+    .interview-start { display:grid; gap:14px; }
+    .interview-topic-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; }
+    .starter-row { display:flex; gap:8px; flex-wrap:wrap; }
+    .starter-chip { border:1px solid var(--line); background:#fff; color:var(--ink); padding:9px 12px; border-radius:999px; cursor:pointer; }
+    .conversation-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .conversation-state { display:flex; align-items:center; gap:8px; color:#2f4d3b; font-size:12px; font-weight:800; }
+    .conversation-state::before { content:""; width:8px; height:8px; border-radius:50%; background:#4f9b69; box-shadow:0 0 0 4px rgba(79,155,105,.12); }
+    .interview-chat { display:flex; flex-direction:column; gap:18px; min-height:280px; max-height:560px; overflow:auto; padding:18px; scroll-behavior:smooth; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.48); }
+    .message-row { display:flex; gap:10px; width:100%; align-items:flex-start; }
+    .message-row.user { flex-direction:row-reverse; }
+    .message-avatar { display:grid; place-items:center; flex:0 0 34px; width:34px; height:34px; border-radius:11px; background:#2f4d3b; color:#fff; font-size:11px; font-weight:900; }
+    .message-row.user .message-avatar { background:#8c5e3c; }
+    .message-wrap { max-width:min(720px,82%); }
+    .message-name { margin:0 0 5px; color:var(--muted); font-size:11px; font-weight:800; }
+    .message-row.user .message-name { text-align:right; }
+    .bubble { padding:12px 15px; border-radius:18px; line-height:1.65; white-space:pre-wrap; }
+    .message-row.assistant .bubble { background:#fff; border:1px solid var(--line); border-top-left-radius:6px; }
+    .message-row.user .bubble { background:#2f4d3b; color:#fff; border-top-right-radius:6px; }
+    .typing-dots { display:inline-flex; gap:4px; align-items:center; min-height:18px; }
+    .typing-dots span { width:6px; height:6px; border-radius:50%; background:#8b8178; animation:typing 1s infinite ease-in-out; }
+    .typing-dots span:nth-child(2) { animation-delay:.16s; }
+    .typing-dots span:nth-child(3) { animation-delay:.32s; }
+    @keyframes typing { 0%,60%,100% { transform:translateY(0); opacity:.45; } 30% { transform:translateY(-4px); opacity:1; } }
+    .composer-shell { margin-top:12px; padding:10px; border:1px solid var(--line); border-radius:20px; background:#fff; box-shadow:0 10px 30px rgba(62,40,25,.07); }
+    .composer-shell textarea { min-height:58px; max-height:180px; resize:none; border:0; padding:8px; outline:none; }
+    .composer-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:8px; border-top:1px solid #f0e7dc; }
+    .composer-left { display:flex; align-items:center; gap:10px; min-width:0; }
+    .interview-finish { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; padding:12px 14px; border-radius:16px; background:#f4eadc; }
     .hidden { display:none !important; }
 
     .bottom-nav {
@@ -116,8 +149,8 @@
     }
     @media (max-width: 900px) {
       .bottom-nav { display: block; }
-      .interview-start, .interview-compose { grid-template-columns:1fr; }
-      .bubble { max-width:94%; }
+      .interview-topic-row { grid-template-columns:1fr; }
+      .message-wrap { max-width:88%; }
     }
     @media (max-width: 560px) {
       .wrap { padding:12px; padding-bottom:calc(92px + env(safe-area-inset-bottom)); }
@@ -127,6 +160,12 @@
       .topbar .btn { width:100%; padding:11px 9px; }
       .panel { padding:16px; }
       .itemhead { flex-direction:column; gap:5px; }
+      .interview-head, .interview-body { padding:16px; }
+      .interview-chat { min-height:320px; padding:12px; }
+      .message-wrap { max-width:86%; }
+      .composer-actions, .interview-finish { align-items:stretch; flex-direction:column; }
+      .composer-left { justify-content:space-between; }
+      .interview-finish .btn { width:100%; }
     }
   </style>
 </head>
@@ -173,33 +212,55 @@
       </aside>
     </section>
 
-    <section class="card panel interview-panel" id="interviewSection">
-      <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; flex-wrap:wrap;">
+    <section class="card interview-panel" id="interviewSection">
+      <div class="interview-head">
         <div>
-          <h2>Memory Interview</h2>
-          <div class="muted">A natural interviewer that listens, follows details, and helps shape a fuller story.</div>
+          <h2>Talk through a memory</h2>
+          <div class="muted">A private conversation that follows the details you share, one question at a time.</div>
         </div>
-        <span class="chip">Guided conversation</span>
+        <span class="chip">Your pace, your words</span>
       </div>
 
-      <div id="interviewStart" style="margin-top:14px;">
-        <label for="interviewTopic">What memory would you like to explore? (optional)</label>
-        <div class="interview-start">
-          <input id="interviewTopic" placeholder="e.g., Grandma's kitchen, moving to Bengaluru, first salary">
-          <button class="btn" id="startInterviewBtn" type="button">Start conversation</button>
+      <div class="interview-body">
+        <div class="interview-start" id="interviewStart">
+          <div>
+            <label for="interviewTopic">What would you like to remember together?</label>
+            <div class="interview-topic-row">
+              <input id="interviewTopic" maxlength="500" placeholder="A person, place, tradition, or moment">
+              <button class="btn" id="startInterviewBtn" type="button">Begin conversation</button>
+            </div>
+          </div>
+          <div>
+            <div class="tiny" style="margin-bottom:8px;">Or choose a starting point</div>
+            <div class="starter-row">
+              <button class="starter-chip" type="button" data-interview-topic="A childhood memory">Childhood</button>
+              <button class="starter-chip" type="button" data-interview-topic="A family tradition">Family tradition</button>
+              <button class="starter-chip" type="button" data-interview-topic="A journey that changed something">A journey</button>
+              <button class="starter-chip" type="button" data-interview-topic="Someone important to me">Someone important</button>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div id="interviewActive" class="hidden">
-        <div class="interview-chat" id="interviewChat" aria-live="polite"></div>
-        <div class="interview-compose">
-          <textarea id="interviewInput" placeholder="Type your answer, or record it..."></textarea>
-          <button class="btn" id="sendInterviewBtn" type="button">Send</button>
-        </div>
-        <div class="interview-actions">
-          <button class="btn ghost" id="interviewMicBtn" type="button">Record answer</button>
-          <span class="record-status" id="interviewMicStatus">Microphone ready</span>
-          <button class="btn ghost" id="finishInterviewBtn" type="button">Create story from interview</button>
+        <div id="interviewActive" class="hidden">
+          <div class="conversation-bar">
+            <div class="conversation-state" id="conversationState">Conversation in progress</div>
+            <button class="starter-chip" id="restartInterviewBtn" type="button">Start over</button>
+          </div>
+          <div class="interview-chat" id="interviewChat" aria-live="polite"></div>
+          <div class="composer-shell" id="interviewComposer">
+            <textarea id="interviewInput" rows="1" maxlength="8000" placeholder="Reply naturally..."></textarea>
+            <div class="composer-actions">
+              <div class="composer-left">
+                <button class="btn ghost" id="interviewMicBtn" type="button">Record reply</button>
+                <span class="record-status" id="interviewMicStatus">Voice ready</span>
+              </div>
+              <button class="btn" id="sendInterviewBtn" type="button">Send</button>
+            </div>
+          </div>
+          <div class="interview-finish" id="interviewFinish">
+            <span class="tiny">When the memory feels complete, shape this conversation into a story.</span>
+            <button class="btn ghost" id="finishInterviewBtn" type="button">Save this memory</button>
+          </div>
         </div>
       </div>
     </section>
@@ -226,9 +287,9 @@
           <option value="timeline_event">Timeline Event</option>
         </select>
         <label>Title</label>
-        <input name="title" placeholder="e.g., First salary, Temple festival">
+        <input name="title" required maxlength="140" placeholder="e.g., First salary, Temple festival">
         <label>Content</label>
-        <textarea name="content" id="storyContent" placeholder="Write the story, or record your voice..."></textarea>
+        <textarea name="content" id="storyContent" required maxlength="6000" placeholder="Write the story, or record your voice..."></textarea>
         <div class="record-row">
           <button class="btn ghost" type="button" id="storyMicBtn">Record voice</button>
           <span class="record-status" id="storyMicStatus">Microphone ready</span>
@@ -236,9 +297,20 @@
         <label>Tags (comma separated)</label>
         <input name="tags" placeholder="family, festival, food">
         <label>Year (optional, for timeline)</label>
-        <input name="year" placeholder="e.g., 1978">
+        <input name="year" type="number" min="1000" max="2100" inputmode="numeric" placeholder="e.g., 1978">
+        <label for="storyImage">Photo (optional)</label>
+        <label class="image-upload" for="storyImage">
+          <span><strong>Add a photo</strong><small>JPEG, PNG, or WebP up to 3 MB</small></span>
+          <span class="image-upload-mark" aria-hidden="true">+</span>
+          <input id="storyImage" name="image" type="file" accept="image/jpeg,image/png,image/webp">
+        </label>
+        <div class="image-preview hidden" id="storyImagePreview">
+          <img id="storyImagePreviewImg" alt="Selected story photo preview">
+          <button class="btn ghost" id="removeStoryImageBtn" type="button">Remove</button>
+        </div>
+        <div class="form-status" id="storyFormStatus" aria-live="polite"></div>
         <div class="toolbar" style="margin-top:14px;">
-          <button class="btn" type="submit">Save</button>
+          <button class="btn" id="saveStoryBtn" type="submit">Save story</button>
         </div>
       </form>
     </div>
@@ -251,6 +323,8 @@
     let page = 0;
     let stories = [];
     let interviewId = null;
+    let selectedStoryImage = null;
+    let storyImagePreviewUrl = null;
 
     const esc = (s) => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
@@ -294,6 +368,7 @@
 
       const body = pageItems.length ? pageItems.map(s => `
         <div class="item">
+          ${s.image_url ? `<img class="story-photo" src="${esc(s.image_url)}" alt="Photo for ${esc(s.title)}" loading="lazy">` : ''}
           <div class="itemhead">
             <strong>${esc(s.title)}</strong>
             <span class="tiny">${esc(s.kind)}${s.year ? ' / ' + esc(s.year) : ''}</span>
@@ -375,7 +450,7 @@
             if (stopTimer) clearTimeout(stopTimer);
             button.disabled = true;
             button.classList.remove('recording');
-            button.textContent = buttonId === 'storyMicBtn' ? 'Record voice' : 'Record answer';
+            button.textContent = buttonId === 'storyMicBtn' ? 'Record voice' : 'Record reply';
             status.textContent = 'Transcribing...';
             if (stream) stream.getTracks().forEach(t => t.stop());
 
@@ -413,19 +488,69 @@
       });
     }
 
-    function addInterviewBubble(role, text) {
+    function addInterviewBubble(role, text, typing = false) {
       const chat = document.getElementById('interviewChat');
+      const row = document.createElement('div');
+      row.className = `message-row ${role === 'user' ? 'user' : 'assistant'}`;
+      if (typing) row.id = 'interviewTyping';
+
+      const avatar = document.createElement('div');
+      avatar.className = 'message-avatar';
+      avatar.textContent = role === 'user' ? 'You' : 'MW';
+
+      const wrap = document.createElement('div');
+      wrap.className = 'message-wrap';
+      const name = document.createElement('div');
+      name.className = 'message-name';
+      name.textContent = role === 'user' ? 'You' : 'Memory Weaver';
       const bubble = document.createElement('div');
-      bubble.className = `bubble ${role === 'user' ? 'user' : 'bot'}`;
-      bubble.textContent = text;
-      chat.appendChild(bubble);
+      bubble.className = 'bubble';
+      if (typing) {
+        bubble.innerHTML = '<span class="typing-dots" aria-label="Memory Weaver is replying"><span></span><span></span><span></span></span>';
+      } else {
+        bubble.textContent = text;
+      }
+      wrap.append(name, bubble);
+      row.append(avatar, wrap);
+      chat.appendChild(row);
       chat.scrollTop = chat.scrollHeight;
+    }
+
+    function setInterviewTyping(show) {
+      const current = document.getElementById('interviewTyping');
+      if (current) current.remove();
+      if (show) addInterviewBubble('assistant', '', true);
+    }
+
+    function resizeInterviewInput() {
+      const input = document.getElementById('interviewInput');
+      input.style.height = 'auto';
+      input.style.height = `${Math.min(input.scrollHeight, 180)}px`;
+    }
+
+    function resetInterviewUI() {
+      interviewId = null;
+      document.getElementById('interviewStart').classList.remove('hidden');
+      document.getElementById('interviewActive').classList.add('hidden');
+      document.getElementById('interviewComposer').classList.remove('hidden');
+      document.getElementById('interviewFinish').classList.remove('hidden');
+      document.getElementById('interviewChat').innerHTML = '';
+      document.getElementById('interviewInput').value = '';
+      document.getElementById('interviewMicStatus').textContent = 'Voice ready';
+      document.getElementById('conversationState').textContent = 'Conversation in progress';
+      resizeInterviewInput();
+      document.getElementById('interviewTopic').focus();
     }
 
     async function startInterview() {
       const button = document.getElementById('startInterviewBtn');
       button.disabled = true;
-      button.textContent = 'Starting...';
+      button.textContent = 'Opening conversation...';
+      document.getElementById('interviewStart').classList.add('hidden');
+      document.getElementById('interviewActive').classList.remove('hidden');
+      document.getElementById('interviewChat').innerHTML = '';
+      document.getElementById('conversationState').textContent = 'Memory Weaver is listening';
+      setInterviewTyping(true);
       try {
         const result = await api('/api/interviews', {
           method: 'POST',
@@ -433,16 +558,17 @@
           body: JSON.stringify({ topic: document.getElementById('interviewTopic').value.trim() })
         });
         interviewId = result.interview_id;
-        document.getElementById('interviewStart').classList.add('hidden');
-        document.getElementById('interviewActive').classList.remove('hidden');
-        document.getElementById('interviewChat').innerHTML = '';
+        setInterviewTyping(false);
         addInterviewBubble('assistant', result.reply);
+        document.getElementById('conversationState').textContent = 'Conversation in progress';
         document.getElementById('interviewInput').focus();
       } catch (e) {
-        alert(e.message);
+        setInterviewTyping(false);
+        resetInterviewUI();
+        document.getElementById('interviewMicStatus').textContent = e.message;
       } finally {
         button.disabled = false;
-        button.textContent = 'Start conversation';
+        button.textContent = 'Begin conversation';
       }
     }
 
@@ -453,19 +579,26 @@
       if (!message) return;
       const button = document.getElementById('sendInterviewBtn');
       input.value = '';
+      resizeInterviewInput();
       addInterviewBubble('user', message);
       button.disabled = true;
-      button.textContent = 'Thinking...';
+      button.textContent = 'Sending...';
+      document.getElementById('conversationState').textContent = 'Memory Weaver is replying';
+      setInterviewTyping(true);
       try {
         const result = await api(`/api/interviews/${interviewId}/messages`, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ message })
         });
+        setInterviewTyping(false);
         addInterviewBubble('assistant', result.reply);
+        document.getElementById('conversationState').textContent = 'Conversation in progress';
       } catch (e) {
+        setInterviewTyping(false);
         input.value = message;
-        alert(e.message);
+        resizeInterviewInput();
+        document.getElementById('conversationState').textContent = e.message;
       } finally {
         button.disabled = false;
         button.textContent = 'Send';
@@ -477,17 +610,21 @@
       if (!interviewId) return;
       const button = document.getElementById('finishInterviewBtn');
       button.disabled = true;
-      button.textContent = 'Creating story...';
+      button.textContent = 'Shaping your story...';
+      document.getElementById('conversationState').textContent = 'Saving this memory';
       try {
         const result = await api(`/api/interviews/${interviewId}/finalize`, { method: 'POST' });
-        addInterviewBubble('assistant', `Your story "${result.story.title}" has been saved.`);
+        addInterviewBubble('assistant', `I saved "${result.story.title}" to your archive. You can find it with your other stories above.`);
         interviewId = null;
+        document.getElementById('conversationState').textContent = 'Saved to your archive';
+        document.getElementById('interviewComposer').classList.add('hidden');
+        document.getElementById('interviewFinish').classList.add('hidden');
         await load();
       } catch (e) {
-        alert(e.message);
+        document.getElementById('conversationState').textContent = e.message;
       } finally {
         button.disabled = false;
-        button.textContent = 'Create story from interview';
+        button.textContent = 'Save this memory';
       }
     }
 
@@ -495,7 +632,7 @@
       const me = await api('/api/me');
       document.getElementById('meChip').textContent = me.user.name || 'Signed in';
       const dash = await api('/api/dashboard');
-      document.getElementById('counts').textContent = `${dash.counts.stories} stories · ${dash.counts.family} relatives`;
+      document.getElementById('counts').textContent = `${dash.counts.stories} stories / ${dash.counts.family} relatives`;
       const fam = await api('/api/family');
       document.getElementById('familyList').innerHTML = fam.family.length
         ? fam.family.map(u => `<div style=\"margin-bottom:8px;\">${esc(u.name || 'Member')}</div>`).join('')
@@ -542,6 +679,14 @@
     document.getElementById('startInterviewBtn').addEventListener('click', startInterview);
     document.getElementById('sendInterviewBtn').addEventListener('click', sendInterviewMessage);
     document.getElementById('finishInterviewBtn').addEventListener('click', finishInterview);
+    document.getElementById('restartInterviewBtn').addEventListener('click', resetInterviewUI);
+    document.querySelectorAll('[data-interview-topic]').forEach(button => {
+      button.addEventListener('click', () => {
+        document.getElementById('interviewTopic').value = button.dataset.interviewTopic;
+        startInterview();
+      });
+    });
+    document.getElementById('interviewInput').addEventListener('input', resizeInterviewInput);
     document.getElementById('interviewInput').addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -557,25 +702,79 @@
     setupRecorder('interviewMicBtn', 'interviewMicStatus', text => {
       const field = document.getElementById('interviewInput');
       field.value = [field.value.trim(), text.trim()].filter(Boolean).join(field.value.trim() ? ' ' : '');
+      resizeInterviewInput();
       field.focus();
     });
+
+    function clearStoryImage() {
+      selectedStoryImage = null;
+      document.getElementById('storyImage').value = '';
+      if (storyImagePreviewUrl) URL.revokeObjectURL(storyImagePreviewUrl);
+      storyImagePreviewUrl = null;
+      document.getElementById('storyImagePreview').classList.add('hidden');
+      document.getElementById('storyImagePreviewImg').removeAttribute('src');
+    }
+
+    document.getElementById('storyImage').addEventListener('change', e => {
+      const file = e.target.files && e.target.files[0];
+      const status = document.getElementById('storyFormStatus');
+      status.textContent = '';
+      if (!file) {
+        clearStoryImage();
+        return;
+      }
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        status.textContent = 'Choose a JPG, PNG, or WebP image.';
+        clearStoryImage();
+        return;
+      }
+      if (file.size > 3 * 1024 * 1024) {
+        status.textContent = 'Choose an image smaller than 3 MB.';
+        clearStoryImage();
+        return;
+      }
+      clearStoryImage();
+      selectedStoryImage = file;
+      storyImagePreviewUrl = URL.createObjectURL(file);
+      document.getElementById('storyImagePreviewImg').src = storyImagePreviewUrl;
+      document.getElementById('storyImagePreview').classList.remove('hidden');
+    });
+    document.getElementById('removeStoryImageBtn').addEventListener('click', clearStoryImage);
 
     document.getElementById('storyForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = e.currentTarget;
       const fd = new FormData(form);
-      const payload = {
-        kind: fd.get('kind') || 'memory',
-        title: fd.get('title') || '',
-        content: fd.get('content') || '',
-        tags: parseTags(fd.get('tags')),
-        year: (fd.get('year') && String(fd.get('year')).trim()) ? Number(fd.get('year')) : null
-      };
-      await api('/api/stories', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-      form.reset();
-      document.getElementById('storyMicStatus').textContent = 'Microphone ready';
-      modal.classList.remove('open');
-      await load();
+      const button = document.getElementById('saveStoryBtn');
+      const status = document.getElementById('storyFormStatus');
+      button.disabled = true;
+      button.textContent = 'Saving...';
+      status.textContent = '';
+      try {
+        if (selectedStoryImage) {
+          fd.set('image', selectedStoryImage, selectedStoryImage.name);
+          await api('/api/stories/with-image', { method:'POST', body:fd });
+        } else {
+          const payload = {
+            kind: fd.get('kind') || 'memory',
+            title: fd.get('title') || '',
+            content: fd.get('content') || '',
+            tags: parseTags(fd.get('tags')),
+            year: (fd.get('year') && String(fd.get('year')).trim()) ? Number(fd.get('year')) : null
+          };
+          await api('/api/stories', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+        }
+        form.reset();
+        clearStoryImage();
+        document.getElementById('storyMicStatus').textContent = 'Microphone ready';
+        modal.classList.remove('open');
+        await load();
+      } catch (error) {
+        status.textContent = error.message;
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Save story';
+      }
     });
 
     document.querySelectorAll('[data-jump]').forEach(btn => {

@@ -15,7 +15,7 @@ Include the affected route, impact, reproduction steps using synthetic data, and
 
 ## Data Protection
 
-Memory Weaver stores personal stories and account identifiers. Production and preview deployments must use separate databases. Invitation tokens are one-time, expire after seven days, are stored as SHA-256 hashes, and are passed through URL fragments so they do not enter request logs.
+Memory Weaver stores personal stories, private story photos, and account identifiers. Photos are served through authenticated routes only; connected family members can view them, but only the owner can replace them. Production and preview deployments must use separate databases. Invitation tokens are one-time, expire after seven days, are stored as SHA-256 hashes, and are passed through URL fragments so they do not enter request logs.
 
 ## Supported Version
 

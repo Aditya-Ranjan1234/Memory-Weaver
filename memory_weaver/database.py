@@ -11,6 +11,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     JSON,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -60,6 +61,19 @@ class Story(Base):
     tags_json: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     year: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[int] = mapped_column(BigInteger, nullable=False, index=True)
+
+
+class StoryImage(Base):
+    __tablename__ = "story_images"
+
+    story_id: Mapped[int] = mapped_column(
+        ForeignKey("stories.id", ondelete="CASCADE"), primary_key=True
+    )
+    mime_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    original_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    image_data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    byte_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[int] = mapped_column(BigInteger, nullable=False)
 
 
 class FamilyLink(Base):

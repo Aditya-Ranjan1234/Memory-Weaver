@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import io
 import os
 import re
@@ -24,6 +25,11 @@ from app import app  # noqa: E402
 from memory_weaver.database import engine  # noqa: E402
 
 
+PNG_PIXEL = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nQAAAABJRU5ErkJggg=="
+)
+
+
 class FakeOpenAI:
     def __init__(self) -> None:
         self.responses = SimpleNamespace(create=self._respond)
@@ -37,11 +43,9 @@ class FakeOpenAI:
     def _respond(self, **_: object) -> SimpleNamespace:
         self.response_number += 1
         if self.response_number == 1:
-            text = (
-                "That first school morning sounds vivid. Who walked with you that day?"
-            )
+            text = "When you picture that school morning, who was walking beside you?"
         elif self.response_number == 2:
-            text = "Your grandmother being beside you feels important. What do you remember seeing?"
+            text = "As you walked with your grandmother, what could you see around you?"
         else:
             text = (
                 '{"title":"My First School Morning","content":"I walked to school with my '
@@ -147,6 +151,10 @@ class MemoryWeaverTests(unittest.TestCase):
         self.assertIn(
             "frame-ancestors 'none'", response.headers["content-security-policy"]
         )
+        self.assertIn(
+            "img-src 'self' data: blob: https:",
+            response.headers["content-security-policy"],
+        )
         rejected = self.client.post(
             "/api/stories",
             json={"title": "Blocked", "content": "Missing CSRF token", "tags": []},
@@ -191,6 +199,10 @@ class MemoryWeaverTests(unittest.TestCase):
 
         private_app = self.client.get("/app").text
         self.assertIn('id="logoutBtn"', private_app)
+        self.assertIn('id="storyImage"', private_app)
+        self.assertIn('id="interviewChat"', private_app)
+        self.assertIn("Reply naturally...", private_app)
+        self.assertNotIn("I'm really looking forward", private_app)
         self.assertNotIn("OpenAI", private_app)
         self.assertEqual(
             self.client.get("/login", follow_redirects=False).headers["location"],
@@ -284,6 +296,107 @@ class MemoryWeaverTests(unittest.TestCase):
                 inviter.get("/api/dashboard").json()["counts"]["family"], 1
             )
 
+    def test_private_story_image_upload_and_validation(self) -> None:
+        created = self.client.post(
+            "/api/stories/with-image",
+            headers=self.csrf_headers,
+            data={
+                "kind": "timeline_event",
+                "title": "The red bicycle",
+                "content": "I learned to ride it in the lane behind our home.",
+                "tags": "childhood, bicycle",
+                "year": "1984",
+            },
+            files={"image": ("bicycle.png", PNG_PIXEL, "image/png")},
+        )
+        self.assertEqual(created.status_code, 200)
+        story_id = created.json()["id"]
+
+        own_stories = self.client.get("/api/stories?scope=me").json()["stories"]
+        saved = next(story for story in own_stories if story["id"] == story_id)
+        self.assertEqual(saved["tags"], ["childhood", "bicycle"])
+        self.assertEqual(saved["image_url"], f"/api/stories/{story_id}/image")
+
+        image = self.client.get(saved["image_url"])
+        self.assertEqual(image.status_code, 200)
+        self.assertEqual(image.headers["content-type"], "image/png")
+        self.assertEqual(image.headers["cache-control"], "private, max-age=3600")
+        self.assertEqual(image.content, PNG_PIXEL)
+
+        invalid = self.client.post(
+            "/api/stories/with-image",
+            headers=self.csrf_headers,
+            data={"title": "Must not survive", "content": "Invalid image."},
+            files={"image": ("fake.png", b"not-an-image", "image/png")},
+        )
+        self.assertEqual(invalid.status_code, 415)
+        titles = {
+            story["title"]
+            for story in self.client.get("/api/stories?scope=me").json()["stories"]
+        }
+        self.assertNotIn("Must not survive", titles)
+
+        bad_year = self.client.post(
+            "/api/stories/with-image",
+            headers=self.csrf_headers,
+            data={"title": "Bad year", "content": "Invalid year.", "year": "later"},
+            files={"image": ("photo.png", PNG_PIXEL, "image/png")},
+        )
+        self.assertEqual(bad_year.status_code, 422)
+        self.assertEqual(bad_year.json()["detail"], "Enter a valid year.")
+
+    def test_story_images_are_shared_only_with_connected_family(self) -> None:
+        with (
+            TestClient(app) as owner,
+            TestClient(app) as relative,
+            TestClient(app) as stranger,
+        ):
+            owner_headers = self._google_login(
+                owner, sub="photo-owner", email="owner@example.test", name="Mira"
+            )
+            relative_headers = self._google_login(
+                relative,
+                sub="photo-relative",
+                email="relative@example.test",
+                name="Kiran",
+            )
+            self._google_login(
+                stranger,
+                sub="photo-stranger",
+                email="stranger@example.test",
+                name="Noor",
+            )
+            created = owner.post(
+                "/api/stories/with-image",
+                headers=owner_headers,
+                data={"title": "Private photograph", "content": "For family only."},
+                files={"image": ("family.png", PNG_PIXEL, "image/png")},
+            )
+            self.assertEqual(created.status_code, 200)
+            story_id = created.json()["id"]
+            image_url = f"/api/stories/{story_id}/image"
+            self.assertEqual(relative.get(image_url).status_code, 404)
+            self.assertEqual(stranger.get(image_url).status_code, 404)
+
+            invite = owner.post("/api/family/invite", headers=owner_headers).json()
+            token = invite["url"].split("#", 1)[1]
+            accepted = relative.post(
+                "/api/family/accept",
+                headers=relative_headers,
+                json={"token": token},
+            )
+            self.assertEqual(accepted.status_code, 200)
+            self.assertEqual(relative.get(image_url).content, PNG_PIXEL)
+            self.assertEqual(stranger.get(image_url).status_code, 404)
+            self.assertEqual(
+                relative.post(
+                    image_url,
+                    headers=relative_headers,
+                    files={"image": ("replacement.png", PNG_PIXEL, "image/png")},
+                ).status_code,
+                404,
+            )
+
     @patch("memory_weaver.app.get_openai_client")
     def test_voice_and_interview_flow(self, openai_client) -> None:
         fake = FakeOpenAI()
@@ -298,7 +411,13 @@ class MemoryWeaverTests(unittest.TestCase):
         transcription = self.client.post(
             "/api/transcribe",
             headers=self.csrf_headers,
-            files={"audio": ("memory.wav", audio.getvalue(), "audio/wav")},
+            files={
+                "audio": (
+                    "memory.webm",
+                    audio.getvalue(),
+                    "audio/webm;codecs=opus",
+                )
+            },
         )
         self.assertEqual(transcription.status_code, 200)
         self.assertEqual(transcription.json()["text"], "A spoken memory")
@@ -309,6 +428,8 @@ class MemoryWeaverTests(unittest.TestCase):
             json={"topic": "first school day"},
         )
         self.assertEqual(started.status_code, 200)
+        self.assertEqual(started.json()["reply"].count("?"), 1)
+        self.assertNotIn("looking forward", started.json()["reply"].lower())
         interview_id = started.json()["interview_id"]
 
         continued = self.client.post(

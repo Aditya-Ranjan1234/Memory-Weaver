@@ -5,9 +5,9 @@ Memory Weaver is a mobile-first family archive for preserving personal stories, 
 ## Features
 
 - Google-only authentication with backend ID-token verification
-- Private story creation with tags, dates, and timeline events
+- Private story creation with tags, dates, timeline events, and optional photos
 - Browser voice recording and OpenAI speech-to-text
-- A conversational AI oral-history interviewer
+- A chat-style AI oral-history interviewer with contextual, one-question follow-ups
 - AI-assisted story creation that preserves the storyteller's language and details
 - Seven-day, one-time family invitation links
 - Hashed invitation tokens that stay out of request logs
@@ -108,6 +108,10 @@ The server uses:
 Store `OPENAI_API_KEY` only in the server environment. Voice recordings are currently transcribed and discarded rather than permanently stored.
 
 The browser stops recordings at five minutes or about 3.8 MB so requests remain below Vercel's Function payload limit.
+
+## Story Photos
+
+Each story can include one private JPEG, PNG, or WebP image up to 3 MB. Images are validated by file signature, stored in Postgres, and served only to the story owner and accepted family connections. They do not receive public object-storage URLs.
 
 ## Vercel Deployment
 
