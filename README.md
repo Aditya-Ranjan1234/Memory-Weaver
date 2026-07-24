@@ -5,13 +5,25 @@ Memory Weaver is a mobile-first family archive for preserving personal stories, 
 ## Features
 
 - Google-only authentication with backend ID-token verification
-- Private story creation with tags, dates, timeline events, and optional photos
+- Private story creation with tags, dates, places, map coordinates, people, and multilingual originals
+- Story editing, soft deletion, revision history, and one-click restoration
 - Browser voice recording and OpenAI speech-to-text
 - A chat-style AI oral-history interviewer with contextual, one-question follow-ups
 - AI-assisted story creation that preserves the storyteller's language and details
+- Interview templates and collaborative family interview sessions
 - Seven-day, one-time family invitation links
 - Hashed invitation tokens that stay out of request logs
-- Combined stories and timelines for connected relatives
+- Owner, editor, contributor, and viewer archive permissions
+- Combined stories, graphical timelines, place maps, and interactive family trees
+- Multi-photo galleries, albums, original audio preservation, captions, and transcripts
+- Private future memory capsules with recipient and unlock-date controls
+- Family-only comments, reactions, and activity notifications
+- Advanced search across story text, names, tags, places, people, and years
+- Autosaved cloud/local drafts and an offline story queue through the PWA
+- Original-language preservation and optional AI translations
+- Story reader mode, read-aloud, larger text, and high-contrast accessibility controls
+- Complete ZIP export with original media, JSON export, and PDF storybooks
+- Account deletion and archive ownership controls
 - Five-story pagination and working tag filters
 - Responsive desktop and mobile interface
 - SQLite support for local development and Neon Postgres for production
@@ -21,6 +33,7 @@ Memory Weaver is a mobile-first family archive for preserving personal stories, 
 
 - `app.py`: local and Vercel FastAPI entry point
 - `memory_weaver/app.py`: routes, authentication, OpenAI workflows, and page serving
+- `memory_weaver/archive_api.py`: collaborative archive, media, privacy, export, and revision APIs
 - `memory_weaver/database.py`: shared SQLAlchemy models and database sessions
 - `memory_weaver/web/`: authenticated application, login, and invitation pages
 - `index.html`, `favicon.svg`, `manifest.webmanifest`, `sw.js`: Vercel-visible landing page and PWA assets
@@ -111,7 +124,7 @@ The browser stops recordings at five minutes or about 3.8 MB so requests remain 
 
 ## Story Photos
 
-Each story can include one private JPEG, PNG, or WebP image up to 3 MB. Images are validated by file signature, stored in Postgres, and served only to the story owner and accepted family connections. They do not receive public object-storage URLs.
+Each story can include multiple private JPEG, PNG, or WebP images and original audio recordings. Media is validated, stored in Postgres, and served only to the story owner and accepted family connections. It does not receive public object-storage URLs. A complete account export includes the original files.
 
 ## Vercel Deployment
 
@@ -135,4 +148,4 @@ The test suite uses a temporary SQLite database and a mocked OpenAI client, so i
 
 ## Privacy Notes
 
-Family stories and voice recordings can contain sensitive personal data. Before a broad public launch, add reviewed privacy and terms pages, account deletion, story deletion/export, and a clear disclosure that recordings and transcripts are processed by OpenAI. See [docs/SECURITY.md](docs/SECURITY.md) for reporting and credential-handling rules.
+Family stories and voice recordings can contain sensitive personal data. Before a broad public launch, add reviewed privacy and terms pages and a clear disclosure that recordings, transcripts, interviews, and translations may be processed by OpenAI. Account export and deletion are available in the authenticated Settings screen. See [docs/SECURITY.md](docs/SECURITY.md) for reporting and credential-handling rules.

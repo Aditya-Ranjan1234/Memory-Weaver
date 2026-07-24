@@ -21,7 +21,7 @@ from fastapi.responses import (
 )
 from openai import OpenAI
 from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -30,14 +30,20 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
 
+from memory_weaver.archive_api import router as archive_router
 from memory_weaver.database import (
     FamilyLink,
     InterviewMessage,
+    InterviewParticipant,
     InterviewSession,
     Invite,
+    MediaAsset,
+    Notification,
+    Person,
     RateLimitEvent,
     Story,
     StoryImage,
+    StoryPerson,
     User,
     db_session,
     init_local_database,
@@ -153,6 +159,23 @@ def accessible_story_owner_ids(session: Session, user_id: int) -> list[int]:
     ]
 
 
+def notify_family_of_story(session: Session, owner_id: int, story: Story) -> None:
+    now = int(time.time())
+    relative_ids = session.scalars(
+        select(FamilyLink.relative_user_id).where(FamilyLink.user_id == owner_id)
+    ).all()
+    for relative_id in relative_ids:
+        session.add(
+            Notification(
+                user_id=relative_id,
+                kind="new_story",
+                message=f'A new family story, "{story.title}", was added.',
+                link=f"#story-{story.id}",
+                created_at=now,
+            )
+        )
+
+
 def read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
@@ -251,6 +274,10 @@ class StoryIn(BaseModel):
     content: str = Field(min_length=1, max_length=6000)
     tags: list[str] = Field(default_factory=list)
     year: int | None = Field(default=None, ge=1000, le=2100)
+    location: str | None = Field(default=None, max_length=255)
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
+    language: str | None = Field(default=None, max_length=40)
 
     @field_validator("title", "content")
     @classmethod
@@ -312,6 +339,7 @@ app.add_middleware(
     https_only=IS_PRODUCTION,
     max_age=30 * 24 * 60 * 60,
 )
+app.include_router(archive_router)
 
 
 @app.on_event("startup")
@@ -555,7 +583,11 @@ def dashboard(request: Request) -> JSONResponse:
             )
         )
         stories = list(
-            session.scalars(select(Story).where(Story.user_id.in_([uid, *family_ids])))
+            session.scalars(
+                select(Story).where(
+                    Story.user_id.in_([uid, *family_ids]), Story.deleted_at.is_(None)
+                )
+            )
         )
     return JSONResponse(
         {
@@ -581,25 +613,73 @@ def list_stories(request: Request, scope: str = "family") -> JSONResponse:
             select(Story, User, StoryImage.story_id)
             .join(User, User.id == Story.user_id)
             .outerjoin(StoryImage, StoryImage.story_id == Story.id)
-            .where(Story.user_id.in_(ids))
+            .where(Story.user_id.in_(ids), Story.deleted_at.is_(None))
             .order_by(Story.created_at.desc(), Story.id.desc())
         ).all()
-        out = [
-            {
-                "id": story.id,
-                "kind": story.kind,
-                "title": story.title,
-                "content": story.content,
-                "tags": story.tags_json or [],
-                "year": story.year,
-                "created_at": story.created_at,
-                "image_url": (
-                    f"/api/stories/{story.id}/image" if image_story_id else None
-                ),
-                "author": {"name": author.name, "picture": author.picture},
-            }
-            for story, author, image_story_id in rows
-        ]
+        out = []
+        for story, author, image_story_id in rows:
+            actor_role = (
+                "owner"
+                if story.user_id == uid
+                else session.scalar(
+                    select(FamilyLink.role).where(
+                        FamilyLink.user_id == story.user_id,
+                        FamilyLink.relative_user_id == uid,
+                    )
+                )
+            )
+            media = session.scalars(
+                select(MediaAsset)
+                .where(MediaAsset.story_id == story.id)
+                .order_by(MediaAsset.id.asc())
+            ).all()
+            people = (
+                session.execute(
+                    select(Person)
+                    .join(StoryPerson, StoryPerson.person_id == Person.id)
+                    .where(StoryPerson.story_id == story.id)
+                    .order_by(Person.name.asc())
+                )
+                .scalars()
+                .all()
+            )
+            out.append(
+                {
+                    "id": story.id,
+                    "kind": story.kind,
+                    "title": story.title,
+                    "content": story.content,
+                    "tags": story.tags_json or [],
+                    "year": story.year,
+                    "location": story.location,
+                    "latitude": story.latitude,
+                    "longitude": story.longitude,
+                    "language": story.language,
+                    "created_at": story.created_at,
+                    "updated_at": story.updated_at or story.created_at,
+                    "owner_user_id": story.user_id,
+                    "can_edit": actor_role in {"owner", "editor"},
+                    "image_url": (
+                        f"/api/stories/{story.id}/image" if image_story_id else None
+                    ),
+                    "media": [
+                        {
+                            "id": item.id,
+                            "kind": item.kind,
+                            "caption": item.caption,
+                            "location": item.location,
+                            "taken_at": item.taken_at,
+                            "transcript": item.transcript,
+                            "url": f"/api/archive/media/{item.id}",
+                        }
+                        for item in media
+                    ],
+                    "people": [
+                        {"id": person.id, "name": person.name} for person in people
+                    ],
+                    "author": {"name": author.name, "picture": author.picture},
+                }
+            )
     return JSONResponse({"stories": out})
 
 
@@ -619,11 +699,17 @@ def create_story(
             content=payload.content,
             tags_json=payload.tags,
             year=payload.year,
+            location=payload.location,
+            latitude=payload.latitude,
+            longitude=payload.longitude,
+            language=payload.language,
             created_at=now,
+            updated_at=now,
         )
         session.add(story)
         session.flush()
         story_id = story.id
+        notify_family_of_story(session, int(user["id"]), story)
     return JSONResponse({"status": "ok", "id": story_id})
 
 
@@ -664,6 +750,7 @@ async def create_story_with_image(
             tags_json=payload.tags,
             year=payload.year,
             created_at=now,
+            updated_at=now,
         )
         session.add(story)
         session.flush()
@@ -678,6 +765,7 @@ async def create_story_with_image(
             )
         )
         story_id = story.id
+        notify_family_of_story(session, uid, story)
     return JSONResponse(
         {
             "status": "ok",
@@ -788,16 +876,30 @@ async def transcribe_audio(
         )
 
     text = getattr(result, "text", None) or str(result)
-    return JSONResponse({"text": text.strip()})
+    return JSONResponse(
+        {
+            "text": text.strip(),
+            "review_required": True,
+            "uncertain_segments": [],
+        }
+    )
 
 
 def get_interview_for_user(
     session: Session, session_id: int, user_id: int
 ) -> InterviewSession:
     interview = session.scalar(
-        select(InterviewSession).where(
+        select(InterviewSession)
+        .outerjoin(
+            InterviewParticipant,
+            InterviewParticipant.session_id == InterviewSession.id,
+        )
+        .where(
             InterviewSession.id == session_id,
-            InterviewSession.user_id == user_id,
+            or_(
+                InterviewSession.user_id == user_id,
+                InterviewParticipant.user_id == user_id,
+            ),
         )
     )
     if not interview:
@@ -860,6 +962,14 @@ def start_interview(
         session.add(interview)
         session.flush()
         session_id = interview.id
+        session.add(
+            InterviewParticipant(
+                session_id=session_id,
+                user_id=int(user["id"]),
+                role="owner",
+                created_at=now,
+            )
+        )
         session.add(
             InterviewMessage(
                 session_id=session_id,
@@ -1009,8 +1119,11 @@ Transcript:
             tags_json=tags,
             year=year,
             created_at=now,
+            updated_at=now,
         )
         session.add(story)
+        session.flush()
+        notify_family_of_story(session, uid, story)
         interview.status = "complete"
         interview.updated_at = now
         session.flush()
@@ -1032,13 +1145,13 @@ Transcript:
 def list_family(request: Request) -> JSONResponse:
     user = require_user(request)
     with db_session() as session:
-        relatives = session.scalars(
-            select(User)
+        relatives = session.execute(
+            select(User, FamilyLink.role)
             .join(FamilyLink, FamilyLink.relative_user_id == User.id)
             .where(FamilyLink.user_id == int(user["id"]))
             .order_by(User.name.asc())
         ).all()
-        family = [user_dict(relative) for relative in relatives]
+        family = [{**user_dict(relative), "role": role} for relative, role in relatives]
     return JSONResponse({"family": family})
 
 
@@ -1098,7 +1211,10 @@ def accept_invite(
 
         invite.accepted_by_user_id = uid
         invite.accepted_at = now
-        for left, right in ((from_uid, uid), (uid, from_uid)):
+        for left, right, role in (
+            (from_uid, uid, "contributor"),
+            (uid, from_uid, "viewer"),
+        ):
             existing = session.scalar(
                 select(FamilyLink).where(
                     FamilyLink.user_id == left,
@@ -1107,8 +1223,31 @@ def accept_invite(
             )
             if not existing:
                 session.add(
-                    FamilyLink(user_id=left, relative_user_id=right, created_at=now)
+                    FamilyLink(
+                        user_id=left,
+                        relative_user_id=right,
+                        role=role,
+                        created_at=now,
+                    )
                 )
+        session.add_all(
+            [
+                Notification(
+                    user_id=from_uid,
+                    kind="family_joined",
+                    message="A relative accepted your family invitation.",
+                    link="#family",
+                    created_at=now,
+                ),
+                Notification(
+                    user_id=uid,
+                    kind="family_joined",
+                    message="You joined a shared family archive.",
+                    link="#family",
+                    created_at=now,
+                ),
+            ]
+        )
     return JSONResponse({"status": "ok"})
 
 

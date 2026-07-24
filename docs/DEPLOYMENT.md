@@ -61,12 +61,12 @@ After saving the Google and Vercel settings, redeploy the Production deployment.
 1. Open `https://memories-weaver.vercel.app/login`.
 2. Select **Continue with Google** and choose the Google account that will own the archive.
 3. On the private dashboard, select **Add story**.
-4. Choose **Memory** or **Timeline Event**, then add a title, story, relevant tags, an optional year, and an optional photo.
-5. Select **Record voice** to dictate instead of typing. Stop the recording and wait for the transcript before saving.
-6. Select **AI interview** when you want the conversational interviewer to ask follow-up questions and shape the answers into a story.
+4. Choose **Memory** or **Timeline Event**, then add a title, story, relevant tags, people, place, optional year, photographs, and audio.
+5. Select **Record voice** to dictate instead of typing. Stop the recording, review uncertain words, and keep the original audio with the story.
+6. Select **AI interview** when you want the conversational interviewer to ask follow-up questions and shape the answers into a story. Connected relatives can join an active interview.
 7. Select **Invite family** to create a seven-day link. Send that link privately; after the relative signs in and accepts it, both accounts can see the combined family archive.
 
-Stories and attached photos are stored in Neon under the signed-in Google account. The public landing-page demo is intentionally separate from private account data.
+Stories, revisions, family relationships, capsules, comments, attached photographs, and audio are stored in Neon under the signed-in Google account. The public landing-page demo is intentionally separate from private account data.
 
 If **Continue with Google** is absent, confirm `MW_GOOGLE_CLIENT_ID` is set in Vercel Production and redeploy. If Google reports an origin error, add the exact deployed origin to the Web client in Google Cloud. If AI or transcription returns an error, replace `OPENAI_API_KEY` with an active server-side key and redeploy.
 
@@ -78,4 +78,5 @@ If **Continue with Google** is absent, confirm `MW_GOOGLE_CLIENT_ID` is set in V
 4. Add the required Production variables.
 5. Redeploy after any environment-variable change.
 6. Verify `/health`, Google login, story isolation, voice transcription, and family invitations.
-7. Enable GitHub private vulnerability reporting, secret scanning, and push protection in repository settings when available.
+7. Verify story revision restore, media access control, PDF/ZIP exports, and account deletion using synthetic accounts.
+8. Enable GitHub private vulnerability reporting, secret scanning, and push protection in repository settings when available.

@@ -7,6 +7,7 @@ import re
 import tempfile
 import unittest
 import wave
+import zipfile
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -219,7 +220,8 @@ class MemoryWeaverTests(unittest.TestCase):
         self.assertNotIn("MW_GOOGLE_CLIENT_ID", unavailable.text)
 
         service_worker = self.client.get("/sw.js").text
-        self.assertIn('const CACHE_NAME = "memory-weaver-v4"', service_worker)
+        self.assertIn('const CACHE_NAME = "memory-weaver-v5"', service_worker)
+        self.assertIn('url.pathname === "/app"', service_worker)
         self.assertIn("!STATIC_PATHS.has(url.pathname)", service_worker)
         self.assertIn('url.pathname === "/"', service_worker)
 
@@ -396,6 +398,350 @@ class MemoryWeaverTests(unittest.TestCase):
                 ).status_code,
                 404,
             )
+
+    def test_story_revision_delete_and_restore_flow(self) -> None:
+        created = self.client.post(
+            "/api/stories",
+            headers=self.csrf_headers,
+            json={
+                "title": "Original title",
+                "content": "The first version of this memory.",
+                "tags": ["family"],
+                "year": 1988,
+                "location": "Mysuru",
+                "language": "English",
+            },
+        )
+        self.assertEqual(created.status_code, 200)
+        story_id = created.json()["id"]
+
+        edited = self.client.patch(
+            f"/api/archive/stories/{story_id}",
+            headers=self.csrf_headers,
+            json={
+                "kind": "memory",
+                "title": "Revised title",
+                "content": "The corrected and fuller version.",
+                "tags": ["family", "childhood"],
+                "year": 1988,
+                "location": "Mysuru",
+                "latitude": 12.2958,
+                "longitude": 76.6394,
+                "language": "English",
+            },
+        )
+        self.assertEqual(edited.status_code, 200)
+        revisions = self.client.get(
+            f"/api/archive/stories/{story_id}/revisions"
+        ).json()["revisions"]
+        self.assertEqual(revisions[0]["title"], "Original title")
+
+        deleted = self.client.delete(
+            f"/api/archive/stories/{story_id}", headers=self.csrf_headers
+        )
+        self.assertEqual(deleted.status_code, 200)
+        visible_ids = {
+            story["id"] for story in self.client.get("/api/stories").json()["stories"]
+        }
+        self.assertNotIn(story_id, visible_ids)
+        trash_ids = {
+            story["id"]
+            for story in self.client.get("/api/archive/stories/deleted").json()[
+                "stories"
+            ]
+        }
+        self.assertIn(story_id, trash_ids)
+        restored = self.client.post(
+            f"/api/archive/stories/{story_id}/restore", headers=self.csrf_headers
+        )
+        self.assertEqual(restored.status_code, 200)
+
+        restore_version = self.client.post(
+            f"/api/archive/stories/{story_id}/revisions/{revisions[0]['id']}/restore",
+            headers=self.csrf_headers,
+        )
+        self.assertEqual(restore_version.status_code, 200)
+        saved = next(
+            story
+            for story in self.client.get("/api/stories").json()["stories"]
+            if story["id"] == story_id
+        )
+        self.assertEqual(saved["title"], "Original title")
+
+    def test_editor_role_controls_cross_family_changes(self) -> None:
+        with TestClient(app) as owner, TestClient(app) as relative:
+            owner_headers = self._google_login(
+                owner, sub="role-owner", email="owner-role@example.test", name="Owner"
+            )
+            relative_headers = self._google_login(
+                relative,
+                sub="role-relative",
+                email="relative-role@example.test",
+                name="Editor",
+            )
+            story_id = owner.post(
+                "/api/stories",
+                headers=owner_headers,
+                json={"title": "Owner story", "content": "Owner's original words."},
+            ).json()["id"]
+            token = (
+                owner.post("/api/family/invite", headers=owner_headers)
+                .json()["url"]
+                .split("#", 1)[1]
+            )
+            self.assertEqual(
+                relative.post(
+                    "/api/family/accept",
+                    headers=relative_headers,
+                    json={"token": token},
+                ).status_code,
+                200,
+            )
+            blocked = relative.patch(
+                f"/api/archive/stories/{story_id}",
+                headers=relative_headers,
+                json={
+                    "kind": "memory",
+                    "title": "Blocked edit",
+                    "content": "A contributor cannot rewrite the owner's memory.",
+                    "tags": [],
+                },
+            )
+            self.assertEqual(blocked.status_code, 404)
+            relative_id = relative.get("/api/me").json()["user"]["id"]
+            role_change = owner.patch(
+                f"/api/archive/family/{relative_id}/role",
+                headers=owner_headers,
+                json={"role": "editor"},
+            )
+            self.assertEqual(role_change.status_code, 200)
+            allowed = relative.patch(
+                f"/api/archive/stories/{story_id}",
+                headers=relative_headers,
+                json={
+                    "kind": "memory",
+                    "title": "Family-edited story",
+                    "content": "An editor added a verified detail.",
+                    "tags": ["family"],
+                },
+            )
+            self.assertEqual(allowed.status_code, 200)
+            owner_story = next(
+                story
+                for story in owner.get("/api/stories").json()["stories"]
+                if story["id"] == story_id
+            )
+            self.assertEqual(owner_story["title"], "Family-edited story")
+
+    def test_archive_platform_features_and_exports(self) -> None:
+        story = self.client.post(
+            "/api/stories",
+            headers=self.csrf_headers,
+            json={
+                "kind": "timeline_event",
+                "title": "Festival courtyard",
+                "content": "Everyone gathered near the lamps after sunset.",
+                "tags": ["festival", "family"],
+                "year": 1999,
+                "location": "Mysuru",
+                "latitude": 12.2958,
+                "longitude": 76.6394,
+            },
+        )
+        story_id = story.json()["id"]
+        person = self.client.post(
+            "/api/archive/people",
+            headers=self.csrf_headers,
+            json={"name": "Lakshmi", "relation": "Grandmother", "birth_year": 1940},
+        )
+        self.assertEqual(person.status_code, 200)
+        person_id = person.json()["id"]
+        self.assertEqual(
+            self.client.post(
+                f"/api/archive/stories/{story_id}/people/{person_id}",
+                headers=self.csrf_headers,
+            ).status_code,
+            200,
+        )
+
+        media = self.client.post(
+            f"/api/archive/stories/{story_id}/media",
+            headers=self.csrf_headers,
+            data={"caption": "Courtyard lamps", "location": "Mysuru"},
+            files={"file": ("lamps.png", PNG_PIXEL, "image/png")},
+        )
+        self.assertEqual(media.status_code, 200)
+        media_id = media.json()["id"]
+        self.assertEqual(
+            self.client.get(f"/api/archive/media/{media_id}").content, PNG_PIXEL
+        )
+        audio_media = self.client.post(
+            f"/api/archive/stories/{story_id}/media",
+            headers=self.csrf_headers,
+            data={"transcript": "The bells rang after sunset."},
+            files={"file": ("memory.webm", b"synthetic-audio", "audio/webm")},
+        )
+        self.assertEqual(audio_media.status_code, 200)
+        self.assertEqual(audio_media.json()["kind"], "audio")
+
+        album = self.client.post(
+            "/api/archive/albums",
+            headers=self.csrf_headers,
+            json={"title": "Festival album", "description": "Family celebrations"},
+        )
+        album_id = album.json()["id"]
+        self.assertEqual(
+            self.client.post(
+                f"/api/archive/albums/{album_id}/items",
+                headers=self.csrf_headers,
+                json={"media_id": media_id},
+            ).status_code,
+            200,
+        )
+        albums = self.client.get("/api/archive/albums").json()["albums"]
+        self.assertTrue(any(item["media"] for item in albums if item["id"] == album_id))
+
+        capsule = self.client.post(
+            "/api/archive/capsules",
+            headers=self.csrf_headers,
+            json={
+                "title": "Open next year",
+                "content": "Remember the courtyard lights.",
+                "recipient_user_id": None,
+                "unlock_at": 4102444800,
+            },
+        )
+        self.assertEqual(capsule.status_code, 200)
+        self.assertTrue(self.client.get("/api/archive/capsules").json()["capsules"])
+
+        self.assertEqual(
+            self.client.post(
+                f"/api/archive/stories/{story_id}/comments",
+                headers=self.csrf_headers,
+                json={"content": "I remember those lamps."},
+            ).status_code,
+            200,
+        )
+        self.assertEqual(
+            self.client.put(
+                f"/api/archive/stories/{story_id}/reaction",
+                headers=self.csrf_headers,
+                json={"emoji": "heart"},
+            ).status_code,
+            200,
+        )
+        social = self.client.get(f"/api/archive/stories/{story_id}/social").json()
+        self.assertEqual(social["comments"][0]["content"], "I remember those lamps.")
+        self.assertEqual(social["reactions"]["heart"], 1)
+
+        draft = {"title": "Autosaved", "content": "Still writing"}
+        self.assertEqual(
+            self.client.put(
+                "/api/archive/drafts/story-composer",
+                headers=self.csrf_headers,
+                json={"payload": draft},
+            ).status_code,
+            200,
+        )
+        self.assertEqual(
+            self.client.get("/api/archive/drafts/story-composer").json()["payload"],
+            draft,
+        )
+        search = self.client.get(
+            "/api/archive/search?q=courtyard&location=Mysuru&year_from=1999&year_to=1999"
+        ).json()["stories"]
+        self.assertTrue(any(item["id"] == story_id for item in search))
+
+        exported = self.client.get("/api/archive/account/export")
+        self.assertEqual(exported.status_code, 200)
+        self.assertTrue(
+            any(item["id"] == story_id for item in exported.json()["stories"])
+        )
+        archive = self.client.get("/api/archive/account/export.zip")
+        self.assertEqual(archive.status_code, 200)
+        with zipfile.ZipFile(io.BytesIO(archive.content)) as exported_zip:
+            self.assertIn("memory-weaver-data.json", exported_zip.namelist())
+            self.assertTrue(
+                any(name.startswith("media/") for name in exported_zip.namelist())
+            )
+        storybook = self.client.get("/api/archive/storybook.pdf")
+        self.assertEqual(storybook.status_code, 200)
+        self.assertTrue(storybook.content.startswith(b"%PDF"))
+
+    @patch("memory_weaver.app.get_openai_client")
+    def test_collaborative_interview_access(self, openai_client) -> None:
+        openai_client.return_value = FakeOpenAI()
+        with TestClient(app) as owner, TestClient(app) as relative:
+            owner_headers = self._google_login(
+                owner,
+                sub="interview-owner",
+                email="interview-owner@example.test",
+                name="Anita",
+            )
+            relative_headers = self._google_login(
+                relative,
+                sub="interview-relative",
+                email="interview-relative@example.test",
+                name="Dev",
+            )
+            token = (
+                owner.post("/api/family/invite", headers=owner_headers)
+                .json()["url"]
+                .split("#", 1)[1]
+            )
+            relative.post(
+                "/api/family/accept",
+                headers=relative_headers,
+                json={"token": token},
+            )
+            started = owner.post(
+                "/api/interviews",
+                headers=owner_headers,
+                json={"topic": "our first family home"},
+            )
+            interview_id = started.json()["interview_id"]
+            relative_id = relative.get("/api/me").json()["user"]["id"]
+            invited = owner.post(
+                f"/api/archive/interviews/{interview_id}/participants",
+                headers=owner_headers,
+                json={"user_id": relative_id},
+            )
+            self.assertEqual(invited.status_code, 200)
+            shared = relative.get(f"/api/archive/interviews/{interview_id}")
+            self.assertEqual(shared.status_code, 200)
+            continued = relative.post(
+                f"/api/interviews/{interview_id}/messages",
+                headers=relative_headers,
+                json={"message": "I remember the blue front door."},
+            )
+            self.assertEqual(continued.status_code, 200)
+            listed_ids = {
+                item["id"]
+                for item in relative.get("/api/archive/interviews").json()["interviews"]
+            }
+            self.assertIn(interview_id, listed_ids)
+
+    def test_account_deletion_ends_session(self) -> None:
+        with TestClient(app) as account:
+            headers = self._google_login(
+                account,
+                sub="delete-account-user",
+                email="delete-me@example.test",
+                name="Delete Me",
+            )
+            account.post(
+                "/api/stories",
+                headers=headers,
+                json={"title": "Temporary", "content": "This will be deleted."},
+            )
+            deleted = account.request(
+                "DELETE",
+                "/api/archive/account",
+                headers=headers,
+                json={"confirmation": "DELETE MY ARCHIVE"},
+            )
+            self.assertEqual(deleted.status_code, 200)
+            self.assertEqual(account.get("/api/me").status_code, 401)
 
     @patch("memory_weaver.app.get_openai_client")
     def test_voice_and_interview_flow(self, openai_client) -> None:

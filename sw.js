@@ -1,4 +1,4 @@
-const CACHE_NAME = "memory-weaver-v4";
+const CACHE_NAME = "memory-weaver-v5";
 const ASSETS = [
   "/",
   "/index.html",
@@ -26,9 +26,24 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
 
   const url = new URL(req.url);
-  if (url.origin !== self.location.origin || !STATIC_PATHS.has(url.pathname)) {
+  if (url.origin !== self.location.origin) {
     return;
   }
+
+  if (url.pathname === "/app") {
+    event.respondWith(
+      fetch(req).then((resp) => {
+        if (resp.ok) {
+          const copy = resp.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => {});
+        }
+        return resp;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  if (!STATIC_PATHS.has(url.pathname)) return;
 
   if (url.pathname === "/" || url.pathname === "/index.html") {
     event.respondWith(

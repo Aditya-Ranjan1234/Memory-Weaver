@@ -2,793 +2,212 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Memory Weaver - App</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Memory Weaver - Family Archive</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <meta name="csrf-token" content="{{CSRF_TOKEN}}">
   <style>
-    :root {
-      --bg: #f4efe7;
-      --panel: rgba(255,250,242,.92);
-      --ink: #1f1a17;
-      --muted: #6d625b;
-      --accent: #8c5e3c;
-      --accent2: #c78b5a;
-      --line: #eadfcd;
-      --shadow: 0 18px 60px rgba(62,40,25,.10);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Trebuchet MS", "Gill Sans", sans-serif;
-      color: var(--ink);
-      min-height: 100svh;
-      background:
-        radial-gradient(circle at top left, rgba(140,94,60,.12), transparent 30%),
-        linear-gradient(180deg, #fbf7f1, #f3eadc 65%, #efe4d3);
-    }
-    .wrap { max-width: 1240px; margin: 0 auto; padding: 18px; padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(8px);
-    }
-    .topbar {
-      display:flex; align-items:center; justify-content: space-between; gap: 12px;
-      padding: 14px 16px;
-    }
-    .brand { display:flex; align-items: center; gap: 10px; }
-    .brand strong { letter-spacing: -.03em; font-size: 18px; }
-    .chip { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #fff; border: 1px solid var(--line); color: var(--muted); }
-    .btn {
-      cursor:pointer; border:0; border-radius: 14px; padding: 12px 16px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; font-weight: 800;
-    }
-    .btn.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
-    .grid { display:grid; gap: 14px; grid-template-columns: 1.2fr .8fr; margin-top: 14px; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-
-    .panel { padding: 18px; }
-    h2 { margin: 0 0 10px; font: 700 24px/1.1 Georgia, "Times New Roman", serif; letter-spacing: -.025em; }
-    .muted { color: var(--muted); }
-    .tiny { font-size: 12px; color: var(--muted); }
-    .toolbar { display:flex; gap: 10px; flex-wrap: wrap; }
-    .list { display: grid; gap: 12px; }
-    .item { padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: rgba(255,255,255,.72); }
-    .itemhead { display:flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-    .story-photo { width:100%; max-height:360px; object-fit:cover; display:block; margin-bottom:14px; border-radius:14px; background:#eee4d6; }
-    .tagrow { display:flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-    .tag { font-size: 12px; padding: 4px 8px; border-radius: 999px; background: #f4eadc; color: #6d4b2a; }
-    .pagerbar { display:flex; align-items:center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-    .pagerlabel { flex: 1; text-align: center; font-size: 12px; color: var(--muted); }
-    .filterbar { display:flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 12px; }
-    .filter-chip { border: 1px solid var(--line); background: rgba(255,255,255,.85); color: var(--ink); padding: 8px 12px; border-radius: 999px; font-size: 13px; cursor:pointer; }
-    .filter-chip.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border-color: transparent; }
-
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(31,26,23,.45); backdrop-filter: blur(4px); display:none; align-items:center; justify-content:center; padding: 18px; z-index: 50; }
-    .modal-backdrop.open { display:flex; }
-    .modal { width: min(760px, 100%); max-height: 92vh; overflow: auto; background: #fffaf2; border-radius: 26px; border: 1px solid var(--line); box-shadow: 0 24px 80px rgba(0,0,0,.28); padding: 18px; }
-    label { display:block; font-size: 13px; color: var(--muted); margin: 12px 0 6px; }
-    input, textarea, select { width:100%; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: #fff; color: var(--ink); font: inherit; }
-    textarea { min-height: 140px; resize: vertical; }
-    .record-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
-    .record-status { font-size:12px; color:var(--muted); }
-    .btn.recording { background:#a63f3f; box-shadow:0 0 0 5px rgba(166,63,63,.12); }
-    .image-upload { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px; border:1px dashed #cdbda7; border-radius:16px; background:#fff; cursor:pointer; }
-    .image-upload input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
-    .image-upload strong { display:block; color:var(--ink); margin-bottom:3px; }
-    .image-upload small { color:var(--muted); }
-    .image-upload-mark { display:grid; place-items:center; width:42px; height:42px; flex:0 0 auto; border-radius:13px; background:#edf4ee; color:#2f4d3b; font-size:21px; }
-    .image-preview { position:relative; margin-top:10px; border-radius:16px; overflow:hidden; border:1px solid var(--line); background:#fff; }
-    .image-preview img { width:100%; max-height:260px; display:block; object-fit:cover; }
-    .image-preview button { position:absolute; top:10px; right:10px; }
-    .form-status { min-height:18px; margin-top:10px; font-size:13px; color:#8a3f35; }
-
-    .interview-panel { margin-top:14px; padding:0; overflow:hidden; }
-    .interview-head { display:flex; justify-content:space-between; gap:16px; align-items:flex-start; padding:22px; border-bottom:1px solid var(--line); }
-    .interview-body { padding:20px; }
-    .interview-start { display:grid; gap:14px; }
-    .interview-topic-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; }
-    .starter-row { display:flex; gap:8px; flex-wrap:wrap; }
-    .starter-chip { border:1px solid var(--line); background:#fff; color:var(--ink); padding:9px 12px; border-radius:999px; cursor:pointer; }
-    .conversation-bar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
-    .conversation-state { display:flex; align-items:center; gap:8px; color:#2f4d3b; font-size:12px; font-weight:800; }
-    .conversation-state::before { content:""; width:8px; height:8px; border-radius:50%; background:#4f9b69; box-shadow:0 0 0 4px rgba(79,155,105,.12); }
-    .interview-chat { display:flex; flex-direction:column; gap:18px; min-height:280px; max-height:560px; overflow:auto; padding:18px; scroll-behavior:smooth; border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.48); }
-    .message-row { display:flex; gap:10px; width:100%; align-items:flex-start; }
-    .message-row.user { flex-direction:row-reverse; }
-    .message-avatar { display:grid; place-items:center; flex:0 0 34px; width:34px; height:34px; border-radius:11px; background:#2f4d3b; color:#fff; font-size:11px; font-weight:900; }
-    .message-row.user .message-avatar { background:#8c5e3c; }
-    .message-wrap { max-width:min(720px,82%); }
-    .message-name { margin:0 0 5px; color:var(--muted); font-size:11px; font-weight:800; }
-    .message-row.user .message-name { text-align:right; }
-    .bubble { padding:12px 15px; border-radius:18px; line-height:1.65; white-space:pre-wrap; }
-    .message-row.assistant .bubble { background:#fff; border:1px solid var(--line); border-top-left-radius:6px; }
-    .message-row.user .bubble { background:#2f4d3b; color:#fff; border-top-right-radius:6px; }
-    .typing-dots { display:inline-flex; gap:4px; align-items:center; min-height:18px; }
-    .typing-dots span { width:6px; height:6px; border-radius:50%; background:#8b8178; animation:typing 1s infinite ease-in-out; }
-    .typing-dots span:nth-child(2) { animation-delay:.16s; }
-    .typing-dots span:nth-child(3) { animation-delay:.32s; }
-    @keyframes typing { 0%,60%,100% { transform:translateY(0); opacity:.45; } 30% { transform:translateY(-4px); opacity:1; } }
-    .composer-shell { margin-top:12px; padding:10px; border:1px solid var(--line); border-radius:20px; background:#fff; box-shadow:0 10px 30px rgba(62,40,25,.07); }
-    .composer-shell textarea { min-height:58px; max-height:180px; resize:none; border:0; padding:8px; outline:none; }
-    .composer-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; padding-top:8px; border-top:1px solid #f0e7dc; }
-    .composer-left { display:flex; align-items:center; gap:10px; min-width:0; }
-    .interview-finish { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; padding:12px 14px; border-radius:16px; background:#f4eadc; }
-    .hidden { display:none !important; }
-
-    .bottom-nav {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
-      background: rgba(255,250,242,.92);
-      border-top: 1px solid var(--line);
-      backdrop-filter: blur(10px);
-      z-index: 40;
-      display: none;
-    }
-    .bottom-nav .navrow {
-      max-width: 1240px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-    }
-    .bottom-nav button {
-      background: #fff;
-      color: var(--ink);
-      border: 1px solid var(--line);
-      font-weight: 800;
-      padding: 12px 12px;
-      border-radius: 16px;
-      cursor: pointer;
-    }
-    @media (max-width: 900px) {
-      .bottom-nav { display: block; }
-      .interview-topic-row { grid-template-columns:1fr; }
-      .message-wrap { max-width:88%; }
-    }
-    @media (max-width: 560px) {
-      .wrap { padding:12px; padding-bottom:calc(92px + env(safe-area-inset-bottom)); }
-      .topbar { align-items:stretch; flex-direction:column; padding:16px; }
-      .brand { justify-content:space-between; }
-      .topbar .toolbar { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-      .topbar .btn { width:100%; padding:11px 9px; }
-      .panel { padding:16px; }
-      .itemhead { flex-direction:column; gap:5px; }
-      .interview-head, .interview-body { padding:16px; }
-      .interview-chat { min-height:320px; padding:12px; }
-      .message-wrap { max-width:86%; }
-      .composer-actions, .interview-finish { align-items:stretch; flex-direction:column; }
-      .composer-left { justify-content:space-between; }
-      .interview-finish .btn { width:100%; }
-    }
+    :root{--paper:#f7f1e7;--surface:#fffdf8;--ink:#201a16;--muted:#75685e;--line:#e7dac8;--clay:#a6643b;--clay2:#c98757;--forest:#294b3b;--sage:#dfeae2;--gold:#e8b85f;--danger:#9b3f38;--shadow:0 18px 55px rgba(74,49,31,.11);--radius:22px;--text-scale:1}
+    *{box-sizing:border-box}html{scroll-behavior:smooth;font-size:calc(16px * var(--text-scale))}body{margin:0;min-height:100svh;color:var(--ink);font-family:"Trebuchet MS","Gill Sans",sans-serif;background:radial-gradient(circle at 8% 0,rgba(166,100,59,.14),transparent 28%),linear-gradient(150deg,#fbf7f0 0,#f3e8d7 58%,#ebddc9 100%)}
+    body.contrast{--paper:#fff;--surface:#fff;--ink:#000;--muted:#303030;--line:#555;--clay:#71320d;--forest:#00351e;background:#fff}button,input,textarea,select{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+    :focus-visible{outline:3px solid var(--gold);outline-offset:3px}.shell{max-width:1520px;margin:auto;display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100svh}.sidebar{position:sticky;top:0;height:100svh;padding:22px 16px;border-right:1px solid var(--line);background:rgba(255,253,248,.86);backdrop-filter:blur(14px);z-index:20}.brand{display:flex;align-items:center;gap:11px;padding:8px 10px 24px}.brandmark{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:var(--forest);color:#fff;font:700 17px Georgia,serif}.brand strong{font:700 18px Georgia,serif}.brand small{display:block;color:var(--muted);margin-top:2px}.nav{display:grid;gap:6px}.navbtn{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:14px;padding:12px;color:var(--muted);background:transparent;text-align:left;font-weight:700}.navbtn:hover,.navbtn.active{color:var(--ink);background:#fff;box-shadow:0 8px 24px rgba(70,43,25,.08)}.navicon{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:#efe4d5;color:var(--clay)}.sidebar-foot{position:absolute;left:16px;right:16px;bottom:18px}.profile{padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff}.profile strong,.profile small{display:block;overflow:hidden;text-overflow:ellipsis}.profile small{color:var(--muted);margin-top:3px}.main{min-width:0;padding:22px 28px 100px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}.topbar h1{margin:0;font:700 clamp(28px,4vw,44px)/1 Georgia,serif;letter-spacing:-.035em}.topbar p{margin:7px 0 0;color:var(--muted)}.actions{display:flex;gap:9px;align-items:center}.btn{border:0;border-radius:13px;padding:11px 15px;font-weight:800;background:linear-gradient(135deg,var(--clay),var(--clay2));color:#fff}.btn:hover{filter:brightness(.97);transform:translateY(-1px)}.btn.secondary{color:var(--ink);background:#fff;border:1px solid var(--line)}.btn.danger{background:var(--danger)}.btn.small{padding:8px 11px;font-size:.82rem}.iconbtn{position:relative;display:grid;place-items:center;width:43px;height:43px;border:1px solid var(--line);border-radius:13px;background:#fff;color:var(--ink)}.badge{position:absolute;right:-4px;top:-5px;min-width:19px;height:19px;padding:0 5px;border-radius:12px;background:var(--danger);color:#fff;font-size:11px;display:grid;place-items:center}.view{display:none}.view.active{display:block;animation:reveal .32s ease both}@keyframes reveal{from{opacity:0;transform:translateY(8px)}}
+    .card{border:1px solid var(--line);border-radius:var(--radius);background:rgba(255,253,248,.92);box-shadow:var(--shadow)}.pad{padding:20px}.hero{display:grid;grid-template-columns:1.35fr .65fr;gap:16px;margin-bottom:16px}.hero-main{padding:28px;min-height:235px;background:linear-gradient(130deg,rgba(255,253,248,.95),rgba(238,225,205,.93)),radial-gradient(circle at 90% 20%,var(--gold),transparent 30%)}.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:.72rem;font-weight:900;color:var(--clay)}.hero h2{font:700 clamp(32px,5vw,62px)/.98 Georgia,serif;letter-spacing:-.045em;margin:14px 0}.hero h2 em{color:var(--clay);font-style:normal}.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{padding:18px}.stat strong{display:block;font:700 29px Georgia,serif}.stat span{color:var(--muted);font-size:.83rem}.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:0 0 13px}.section-head h2{margin:0;font:700 27px Georgia,serif}.section-head p{margin:5px 0 0;color:var(--muted)}
+    .searchbox{padding:16px;margin-bottom:15px}.searchgrid{display:grid;grid-template-columns:2fr repeat(4,1fr) auto;gap:9px}.field{display:grid;gap:6px}.field label{color:var(--muted);font-size:.76rem;font-weight:700}.input,input,textarea,select{width:100%;border:1px solid var(--line);border-radius:13px;padding:11px 13px;color:var(--ink);background:#fff}textarea{min-height:125px;resize:vertical}.filterbar{display:flex;gap:7px;overflow:auto;padding:2px 0 12px}.chip,.filterchip{border:1px solid var(--line);border-radius:999px;padding:7px 11px;white-space:nowrap;background:#fff;color:var(--muted)}.filterchip.active{background:var(--forest);border-color:var(--forest);color:#fff}.storygrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.story{overflow:hidden}.story-cover{aspect-ratio:16/8;display:block;width:100%;object-fit:cover;background:linear-gradient(135deg,#e5d3bd,#f5ecdf)}.story-body{padding:18px}.story-meta{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:.76rem}.story h3{font:700 23px Georgia,serif;margin:10px 0 8px}.story-copy{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;color:#544a43;line-height:1.65}.story-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px}.pager{display:flex;justify-content:center;align-items:center;gap:15px;margin:18px}.empty{padding:35px;text-align:center;color:var(--muted)}
+    .timeline{position:relative;display:grid;gap:14px;padding-left:36px}.timeline:before{content:"";position:absolute;left:13px;top:10px;bottom:10px;width:2px;background:#ceb69b}.event{position:relative;padding:18px}.event:before{content:"";position:absolute;left:-31px;top:24px;width:12px;height:12px;border-radius:50%;background:var(--clay);box-shadow:0 0 0 6px #f3e5d5}.event-year{font-weight:900;color:var(--clay)}.map{position:relative;min-height:330px;overflow:hidden;background:linear-gradient(155deg,#e6eee5,#f7efd9)}.map:before{content:"";position:absolute;inset:0;opacity:.25;background-image:linear-gradient(#78917f 1px,transparent 1px),linear-gradient(90deg,#78917f 1px,transparent 1px);background-size:48px 48px}.map-point{position:absolute;transform:translate(-50%,-50%);border:0;background:var(--clay);color:#fff;border-radius:999px;padding:8px 11px;box-shadow:0 5px 20px rgba(60,35,20,.25)}
+    .tree{display:flex;gap:20px;overflow:auto;padding:28px;min-height:350px;align-items:flex-start}.person{min-width:180px;padding:15px;text-align:center}.avatar{display:grid;place-items:center;width:54px;height:54px;margin:auto;border-radius:18px;background:var(--sage);color:var(--forest);font:700 19px Georgia,serif}.person strong{display:block;margin-top:9px}.person small{color:var(--muted)}.tree-link{width:26px;height:2px;background:var(--line);margin-top:40px}.familygrid,.albumgrid,.capsulegrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.album-cover{display:grid;grid-template-columns:repeat(2,1fr);gap:3px;height:180px;background:#eadfce;overflow:hidden;border-radius:18px 18px 0 0}.album-cover img{width:100%;height:100%;object-fit:cover}.locked{filter:blur(4px);user-select:none}.capsule{padding:20px;position:relative;overflow:hidden}.capsule:after{content:"";position:absolute;width:80px;height:80px;border-radius:50%;right:-30px;top:-30px;background:rgba(232,184,95,.3)}
+    .interview-layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:14px}.templates{padding:15px}.template{display:block;width:100%;text-align:left;border:1px solid var(--line);border-radius:13px;background:#fff;padding:11px;margin-top:8px}.template.active{border-color:var(--clay);background:#fbefe4}.chat{min-height:480px;display:flex;flex-direction:column}.messages{flex:1;max-height:540px;overflow:auto;display:flex;flex-direction:column;gap:14px;padding:20px}.message{max-width:78%;padding:13px 15px;border-radius:18px;line-height:1.6;background:#fff;border:1px solid var(--line)}.message.user{align-self:flex-end;background:var(--forest);color:#fff;border-color:var(--forest)}.composer{padding:12px;border-top:1px solid var(--line);display:grid;grid-template-columns:auto 1fr auto;gap:8px}.composer textarea{min-height:48px;max-height:140px}.review{margin:0 12px 12px;padding:13px;border:1px solid var(--gold);border-radius:15px;background:#fff9e9}.dottyping:after{content:"...";animation:dots 1.2s steps(4,end) infinite}@keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%,100%{content:"..."}}
+    .notice{padding:15px;display:flex;justify-content:space-between;gap:12px;align-items:start}.notice.unread{border-left:4px solid var(--clay)}.settingsgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.setting{padding:20px}.setting h3{font:700 21px Georgia,serif;margin:0 0 8px}.setting p{color:var(--muted);line-height:1.5}.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.gallery img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px}.audio{width:100%;margin-top:8px}
+    .modalback{display:none;position:fixed;inset:0;z-index:60;padding:18px;background:rgba(25,20,17,.55);backdrop-filter:blur(7px);align-items:center;justify-content:center}.modalback.open{display:flex}.modal{width:min(820px,100%);max-height:92svh;overflow:auto;border-radius:24px;background:var(--surface);border:1px solid var(--line);box-shadow:0 30px 100px rgba(0,0,0,.3)}.modalhead{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:17px 20px;border-bottom:1px solid var(--line);background:rgba(255,253,248,.96)}.modalhead h2{font:700 26px Georgia,serif;margin:0}.modalbody{padding:20px}.formgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.span2{grid-column:1/-1}.upload{border:1px dashed #bda88e;border-radius:16px;padding:18px;text-align:center;background:#fff}.status{min-height:20px;margin-top:8px;color:var(--danger);font-size:.82rem}.reader{width:min(920px,100%)}.reader-title{font:700 clamp(32px,6vw,60px)/1 Georgia,serif;letter-spacing:-.04em;margin:8px 0 14px}.reader-copy{font:400 1.08rem/1.85 Georgia,serif;white-space:pre-wrap}.reader-tools{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.comments{display:grid;gap:8px;margin-top:20px}.comment{padding:11px;border-radius:12px;background:#f5ede1}.toast{position:fixed;right:20px;bottom:20px;z-index:100;max-width:360px;padding:13px 16px;border-radius:14px;background:var(--forest);color:#fff;box-shadow:var(--shadow);transform:translateY(100px);opacity:0;transition:.25s}.toast.show{transform:none;opacity:1}
+    .mobile-nav{display:none}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media(max-width:1050px){.shell{grid-template-columns:84px minmax(0,1fr)}.sidebar{padding:18px 10px}.brand{justify-content:center}.brand div:last-child,.navlabel,.sidebar-foot{display:none}.navbtn{justify-content:center}.hero{grid-template-columns:1fr}.searchgrid{grid-template-columns:repeat(2,1fr)}.searchgrid .field:first-child{grid-column:1/-1}.familygrid,.albumgrid,.capsulegrid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:720px){.shell{display:block}.sidebar{display:none}.main{padding:14px 12px 95px}.topbar{align-items:flex-start}.topbar p{display:none}.topbar .actions .btn{display:none}.hero-main{padding:21px;min-height:0}.hero h2{font-size:40px}.stats{grid-template-columns:repeat(2,1fr)}.storygrid,.familygrid,.albumgrid,.capsulegrid,.settingsgrid{grid-template-columns:1fr}.searchgrid,.formgrid{grid-template-columns:1fr}.searchgrid .field:first-child,.span2{grid-column:auto}.interview-layout{grid-template-columns:1fr}.templates{display:flex;overflow:auto;gap:7px}.template{min-width:150px;margin:0}.message{max-width:90%}.composer{grid-template-columns:auto 1fr}.composer .send{grid-column:1/-1}.mobile-nav{position:fixed;display:grid;grid-template-columns:repeat(5,1fr);left:0;right:0;bottom:0;z-index:50;padding:8px 8px calc(8px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:rgba(255,253,248,.95);backdrop-filter:blur(12px)}.mobile-nav button{border:0;background:transparent;color:var(--muted);font-size:.68rem;font-weight:800;padding:7px 2px}.mobile-nav span{display:block;font-size:1.15rem;margin-bottom:2px}.mobile-nav button.active{color:var(--clay)}.modalback{padding:0;align-items:flex-end}.modal{max-height:94svh;border-radius:24px 24px 0 0}.gallery{grid-template-columns:repeat(2,1fr)}.reader-title{font-size:38px}.section-head{align-items:flex-start}.story-actions{align-items:flex-start;flex-direction:column}.story-actions .actions{width:100%}}
+    .fab{display:none;position:fixed;right:16px;bottom:82px;z-index:49;width:56px;height:56px;border:0;border-radius:18px;background:var(--clay);color:#fff;font-size:27px;box-shadow:0 14px 32px rgba(70,40,20,.3)}
+    @media(max-width:720px){.fab{display:block}.section-head{align-items:stretch;flex-direction:column}.section-head>.btn{align-self:flex-start}.topbar{padding-right:2px}.topbar .actions{flex:0 0 auto}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="card topbar">
-      <div class="brand">
-        <strong>Memory Weaver</strong>
-        <span class="chip" id="meChip">Signed in</span>
-      </div>
-      <div class="toolbar">
-        <button class="btn ghost" id="inviteBtn" type="button">Invite family</button>
-        <button class="btn ghost" id="openInterviewBtn" type="button">Guided interview</button>
-        <button class="btn" id="openComposerBtn" type="button">Add story</button>
-        <button class="btn ghost" id="logoutBtn" type="button">Logout</button>
-      </div>
-    </header>
+  <a class="sr-only" href="#content">Skip to content</a>
+  <div class="shell">
+    <aside class="sidebar" aria-label="Archive navigation">
+      <div class="brand"><div class="brandmark">MW</div><div><strong>Memory Weaver</strong><small>Family archive</small></div></div>
+      <nav class="nav">
+        <button class="navbtn active" data-view="home"><span class="navicon">⌂</span><span class="navlabel">Home</span></button>
+        <button class="navbtn" data-view="stories"><span class="navicon">✦</span><span class="navlabel">Stories</span></button>
+        <button class="navbtn" data-view="timeline"><span class="navicon">↝</span><span class="navlabel">Timeline & map</span></button>
+        <button class="navbtn" data-view="family"><span class="navicon">♧</span><span class="navlabel">Family tree</span></button>
+        <button class="navbtn" data-view="albums"><span class="navicon">▦</span><span class="navlabel">Albums</span></button>
+        <button class="navbtn" data-view="capsules"><span class="navicon">◇</span><span class="navlabel">Capsules</span></button>
+        <button class="navbtn" data-view="interview"><span class="navicon">◉</span><span class="navlabel">AI interview</span></button>
+        <button class="navbtn" data-view="settings"><span class="navicon">⚙</span><span class="navlabel">Settings</span></button>
+      </nav>
+      <div class="sidebar-foot"><div class="profile"><strong id="meChip">Signed in</strong><small id="meEmail"></small></div></div>
+    </aside>
 
-    <section class="grid">
-      <div class="card panel" id="storiesSection">
-        <div style="display:flex; justify-content: space-between; gap: 12px; align-items: end;">
-          <div>
-            <h2>Stories</h2>
-            <div class="tiny">Your memories and stories shared by connected relatives.</div>
-          </div>
-          <div class="tiny" id="counts"></div>
+    <main class="main" id="content">
+      <header class="topbar">
+        <div><h1 id="viewTitle">Your archive</h1><p id="viewSubtitle">Keep the moments that made your family.</p></div>
+        <div class="actions">
+          <button class="iconbtn" id="notificationBtn" aria-label="Notifications">♢<span class="badge hidden" id="notificationBadge">0</span></button>
+          <button class="btn secondary" id="inviteBtn">Invite family</button>
+          <button class="btn" id="openComposerBtn">+ Add memory</button>
         </div>
-        <div class="filterbar" id="tagFilters"></div>
-        <div class="list" id="library"></div>
-      </div>
+      </header>
 
-      <aside class="card panel" id="familySection">
-        <h2>Family</h2>
-        <div class="muted" style="margin-bottom:10px;">Bring trusted relatives into one shared family archive.</div>
-        <div class="item">
-          <div class="tiny" style="margin-bottom:6px;">Invite link</div>
-          <div class="muted" id="inviteLink">Create a private invitation when you are ready.</div>
+      <section class="view active" id="view-home">
+        <div class="hero">
+          <div class="card hero-main"><span class="eyebrow">A living family archive</span><h2>Every voice leaves<br><em>a thread.</em></h2><p>Collect stories, photographs, voices, places, and messages for the people who come next.</p><div class="actions" style="margin-top:20px"><button class="btn" data-open-composer>Add a memory</button><button class="btn secondary" data-go="interview">Start an interview</button></div></div>
+          <div class="stats"><div class="card stat"><strong id="storyCount">0</strong><span>Stories</span></div><div class="card stat"><strong id="peopleCount">0</strong><span>People</span></div><div class="card stat"><strong id="mediaCount">0</strong><span>Media files</span></div><div class="card stat"><strong id="capsuleCount">0</strong><span>Capsules</span></div></div>
         </div>
-        <div style="height:12px;"></div>
-        <div class="item">
-          <div class="tiny" style="margin-bottom:10px;">Connected members</div>
-          <div id="familyList" class="muted">None yet.</div>
-        </div>
-      </aside>
-    </section>
+        <div class="section-head"><div><h2>Recently remembered</h2><p>The latest additions from your connected family.</p></div><button class="btn secondary small" data-go="stories">View all</button></div>
+        <div class="storygrid" id="recentStories"></div>
+      </section>
 
-    <section class="card interview-panel" id="interviewSection">
-      <div class="interview-head">
-        <div>
-          <h2>Talk through a memory</h2>
-          <div class="muted">A private conversation that follows the details you share, one question at a time.</div>
+      <section class="view" id="view-stories">
+        <div class="card searchbox">
+          <div class="searchgrid">
+            <div class="field"><label for="searchQ">Search every memory</label><input id="searchQ" placeholder="Names, words, places, or moments"></div>
+            <div class="field"><label for="searchTag">Tag</label><input id="searchTag" placeholder="festival"></div>
+            <div class="field"><label for="searchPerson">Person</label><input id="searchPerson" placeholder="Grandmother"></div>
+            <div class="field"><label for="searchLocation">Place</label><input id="searchLocation" placeholder="Bengaluru"></div>
+            <div class="field"><label for="searchYear">Year</label><input id="searchYear" type="number" min="1000" max="2100" placeholder="1978"></div>
+            <button class="btn" id="searchBtn">Search</button>
+          </div>
         </div>
-        <span class="chip">Your pace, your words</span>
-      </div>
+        <div class="section-head"><div><h2>Story library</h2><p id="libraryMeta">All family memories</p></div><button class="btn secondary small" id="trashBtn">Recently deleted</button></div>
+        <div class="filterbar" id="tagFilters"></div><div class="storygrid" id="library"></div><div class="pager" id="pager"></div>
+      </section>
 
-      <div class="interview-body">
-        <div class="interview-start" id="interviewStart">
-          <div>
-            <label for="interviewTopic">What would you like to remember together?</label>
-            <div class="interview-topic-row">
-              <input id="interviewTopic" maxlength="500" placeholder="A person, place, tradition, or moment">
-              <button class="btn" id="startInterviewBtn" type="button">Begin conversation</button>
-            </div>
-          </div>
-          <div>
-            <div class="tiny" style="margin-bottom:8px;">Or choose a starting point</div>
-            <div class="starter-row">
-              <button class="starter-chip" type="button" data-interview-topic="A childhood memory">Childhood</button>
-              <button class="starter-chip" type="button" data-interview-topic="A family tradition">Family tradition</button>
-              <button class="starter-chip" type="button" data-interview-topic="A journey that changed something">A journey</button>
-              <button class="starter-chip" type="button" data-interview-topic="Someone important to me">Someone important</button>
-            </div>
-          </div>
-        </div>
+      <section class="view" id="view-timeline">
+        <div class="section-head"><div><h2>Timeline & places</h2><p>See when memories happened and how your family moved.</p></div></div>
+        <div class="hero"><div class="card pad"><div class="timeline" id="timeline"></div></div><div class="card map" id="memoryMap" aria-label="Map of memory locations"></div></div>
+      </section>
 
-        <div id="interviewActive" class="hidden">
-          <div class="conversation-bar">
-            <div class="conversation-state" id="conversationState">Conversation in progress</div>
-            <button class="starter-chip" id="restartInterviewBtn" type="button">Start over</button>
-          </div>
-          <div class="interview-chat" id="interviewChat" aria-live="polite"></div>
-          <div class="composer-shell" id="interviewComposer">
-            <textarea id="interviewInput" rows="1" maxlength="8000" placeholder="Reply naturally..."></textarea>
-            <div class="composer-actions">
-              <div class="composer-left">
-                <button class="btn ghost" id="interviewMicBtn" type="button">Record reply</button>
-                <span class="record-status" id="interviewMicStatus">Voice ready</span>
-              </div>
-              <button class="btn" id="sendInterviewBtn" type="button">Send</button>
-            </div>
-          </div>
-          <div class="interview-finish" id="interviewFinish">
-            <span class="tiny">When the memory feels complete, shape this conversation into a story.</span>
-            <button class="btn ghost" id="finishInterviewBtn" type="button">Save this memory</button>
-          </div>
+      <section class="view" id="view-family">
+        <div class="section-head"><div><h2>Family tree</h2><p>Connect people to one another and to their stories.</p></div><button class="btn" id="addPersonBtn">+ Add person</button></div>
+        <div class="card tree" id="familyTree"></div><div style="height:16px"></div>
+        <div class="section-head"><div><h2>Archive members</h2><p>Choose what each connected relative can do.</p></div></div><div class="familygrid" id="familyMembers"></div>
+      </section>
+
+      <section class="view" id="view-albums">
+        <div class="section-head"><div><h2>Albums & galleries</h2><p>Arrange photographs and recordings into collections.</p></div><button class="btn" id="createAlbumBtn">+ New album</button></div><div class="albumgrid" id="albums"></div>
+      </section>
+
+      <section class="view" id="view-capsules">
+        <div class="section-head"><div><h2>Memory capsules</h2><p>Write something today for a loved one to open later.</p></div><button class="btn" id="createCapsuleBtn">+ New capsule</button></div><div class="capsulegrid" id="capsules"></div>
+      </section>
+
+      <section class="view" id="view-interview">
+        <div class="section-head"><div><h2>Guided conversation</h2><p>A natural oral-history interview that follows your details, one question at a time.</p></div></div>
+        <div class="interview-layout">
+          <div class="card templates"><strong>Conversation starters</strong><button class="template active" data-topic="A childhood memory">Childhood</button><button class="template" data-topic="A family migration or journey">Migration</button><button class="template" data-topic="A treasured family recipe">Recipes</button><button class="template" data-topic="A first job or career turning point">Career</button><button class="template" data-topic="A festival or family tradition">Festivals</button><button class="template" data-topic="A relationship that shaped me">Relationships</button></div>
+          <div class="card chat"><div class="messages" id="interviewChat"><div class="message">Choose a starting point, or tell me what you would like to remember.</div></div><div class="review hidden" id="transcriptReview"><strong>Review your transcript</strong><textarea id="reviewText"></textarea><div class="actions"><button class="btn small" id="acceptTranscriptBtn">Use transcript</button><button class="btn secondary small" id="discardTranscriptBtn">Discard</button></div></div><div class="composer"><button class="iconbtn" id="interviewMicBtn" aria-label="Record reply">●</button><textarea id="interviewInput" maxlength="8000" placeholder="Reply naturally..."></textarea><button class="btn send" id="sendInterviewBtn">Begin conversation</button></div><div class="pad" style="padding-top:0;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span id="interviewMicStatus" class="status">Voice ready</span><div class="actions"><select id="interviewCollaborator" aria-label="Invite a relative"><option value="">Add collaborator...</option></select><button class="btn secondary small" id="finishInterviewBtn" disabled>Save as story</button></div></div></div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <section class="view" id="view-notifications"><div class="section-head"><div><h2>Notifications</h2><p>Family activity, invitations, and future reminders.</p></div><button class="btn secondary small" id="markReadBtn">Mark all read</button></div><div class="card" id="notifications"></div></section>
+
+      <section class="view" id="view-settings">
+        <div class="section-head"><div><h2>Archive settings</h2><p>Your data, reading preferences, and privacy controls.</p></div></div>
+        <div class="settingsgrid">
+          <div class="card setting"><h3>Storybook</h3><p>Create a chaptered PDF of the family archive.</p><a class="btn" href="/api/archive/storybook.pdf">Download PDF</a></div>
+          <div class="card setting"><h3>Data ownership</h3><p>Download your structured archive together with original photographs and audio files.</p><div class="actions"><a class="btn secondary" href="/api/archive/account/export.zip">Export complete archive</a><a class="btn secondary small" href="/api/archive/account/export">JSON only</a></div></div>
+          <div class="card setting"><h3>Reading comfort</h3><p>Increase text size, use stronger contrast, or listen to any story aloud.</p><div class="actions"><button class="btn secondary" id="textSizeBtn">Larger text</button><button class="btn secondary" id="contrastBtn">High contrast</button></div></div>
+          <div class="card setting"><h3>Offline capture</h3><p id="offlineStatus">Drafts autosave locally and sync when your connection returns.</p><button class="btn secondary" id="syncBtn">Sync pending stories</button></div>
+          <div class="card setting span2"><h3>Delete account</h3><p>Permanently erase your account and owned archive data. Export first if you want a copy.</p><button class="btn danger" id="deleteAccountBtn">Delete my archive</button></div>
+          <div class="card setting span2"><button class="btn secondary" id="logoutBtn">Sign out</button></div>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <nav class="bottom-nav" aria-label="Primary">
-    <div class="navrow">
-      <button type="button" data-jump="storiesSection">Stories</button>
-      <button type="button" data-jump="familySection">Family</button>
-      <button type="button" data-jump="interviewSection">Interview</button>
-    </div>
-  </nav>
+  <button class="fab" id="mobileComposerBtn" aria-label="Add memory">+</button>
+  <nav class="mobile-nav" aria-label="Primary mobile navigation"><button class="active" data-view="home"><span>⌂</span>Home</button><button data-view="stories"><span>✦</span>Stories</button><button data-view="timeline"><span>↝</span>Timeline</button><button data-view="family"><span>♧</span>Family</button><button data-view="interview"><span>◉</span>Interview</button></nav>
 
-  <div class="modal-backdrop" id="composerModal">
-    <div class="modal">
-      <div style="display:flex; justify-content: space-between; gap: 12px; align-items:center;">
-        <h2 style="margin:0;">Add Story</h2>
-        <button class="btn ghost" type="button" id="closeComposerBtn">Close</button>
-      </div>
-      <form id="storyForm">
-        <label>Type</label>
-        <select name="kind">
-          <option value="memory">Memory</option>
-          <option value="timeline_event">Timeline Event</option>
-        </select>
-        <label>Title</label>
-        <input name="title" required maxlength="140" placeholder="e.g., First salary, Temple festival">
-        <label>Content</label>
-        <textarea name="content" id="storyContent" required maxlength="6000" placeholder="Write the story, or record your voice..."></textarea>
-        <div class="record-row">
-          <button class="btn ghost" type="button" id="storyMicBtn">Record voice</button>
-          <span class="record-status" id="storyMicStatus">Microphone ready</span>
-        </div>
-        <label>Tags (comma separated)</label>
-        <input name="tags" placeholder="family, festival, food">
-        <label>Year (optional, for timeline)</label>
-        <input name="year" type="number" min="1000" max="2100" inputmode="numeric" placeholder="e.g., 1978">
-        <label for="storyImage">Photo (optional)</label>
-        <label class="image-upload" for="storyImage">
-          <span><strong>Add a photo</strong><small>JPEG, PNG, or WebP up to 3 MB</small></span>
-          <span class="image-upload-mark" aria-hidden="true">+</span>
-          <input id="storyImage" name="image" type="file" accept="image/jpeg,image/png,image/webp">
-        </label>
-        <div class="image-preview hidden" id="storyImagePreview">
-          <img id="storyImagePreviewImg" alt="Selected story photo preview">
-          <button class="btn ghost" id="removeStoryImageBtn" type="button">Remove</button>
-        </div>
-        <div class="form-status" id="storyFormStatus" aria-live="polite"></div>
-        <div class="toolbar" style="margin-top:14px;">
-          <button class="btn" id="saveStoryBtn" type="submit">Save story</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <div class="modalback" id="storyModal" role="dialog" aria-modal="true" aria-labelledby="storyModalTitle"><div class="modal"><div class="modalhead"><h2 id="storyModalTitle">Add a memory</h2><button class="iconbtn" data-close="storyModal" aria-label="Close">×</button></div><div class="modalbody"><form id="storyForm"><input type="hidden" id="editStoryId"><div class="formgrid"><div class="field"><label for="storyKind">Type</label><select id="storyKind"><option value="memory">Memory</option><option value="timeline_event">Timeline event</option></select></div><div class="field"><label for="storyLanguage">Original language</label><input id="storyLanguage" maxlength="40" placeholder="English, Kannada, Hindi..."></div><div class="field span2"><label for="storyTitle">Title</label><input id="storyTitle" name="title" required maxlength="140" placeholder="Give this memory a name"></div><div class="field span2"><label for="storyContent">Story</label><textarea id="storyContent" name="content" required maxlength="12000" placeholder="Write the story in your own words..."></textarea></div><div class="field"><label for="storyTags">Tags</label><input id="storyTags" placeholder="family, childhood, festival"></div><div class="field"><label for="storyYear">Year</label><input id="storyYear" type="number" min="1000" max="2100" placeholder="1978"></div><div class="field"><label for="storyLocation">Place</label><input id="storyLocation" maxlength="255" placeholder="Mysuru, Karnataka"></div><div class="field"><label>Map coordinates (optional)</label><div style="display:flex;gap:7px"><input id="storyLat" type="number" step="any" min="-90" max="90" placeholder="Latitude"><input id="storyLng" type="number" step="any" min="-180" max="180" placeholder="Longitude"></div></div><div class="upload span2"><label for="storyImage"><strong>Add photographs</strong><br><small>Multiple JPG, PNG, or WebP files, up to 4 MB each</small></label><input id="storyImage" type="file" accept="image/jpeg,image/png,image/webp" multiple></div><div class="upload span2"><strong>Preserve the voice</strong><p>Record a memory or attach an existing audio file. You will review the transcript before it enters the story.</p><div class="actions" style="justify-content:center"><button class="btn secondary" type="button" id="storyMicBtn">Record voice</button><input id="storyAudio" type="file" accept="audio/*"></div><span id="storyMicStatus" class="status">Microphone ready</span></div></div><div id="draftStatus" class="status" aria-live="polite"></div><div class="actions" style="margin-top:15px"><button class="btn" id="saveStoryBtn">Save memory</button><button class="btn secondary hidden" type="button" id="deleteStoryBtn">Move to recently deleted</button></div></form></div></div></div>
+
+  <div class="modalback" id="readerModal" role="dialog" aria-modal="true"><article class="modal reader"><div class="modalhead"><span class="eyebrow">Story reader</span><button class="iconbtn" data-close="readerModal" aria-label="Close">×</button></div><div class="modalbody" id="readerBody"></div></article></div>
+  <div class="modalback" id="simpleModal" role="dialog" aria-modal="true"><div class="modal"><div class="modalhead"><h2 id="simpleTitle">Details</h2><button class="iconbtn" data-close="simpleModal">×</button></div><div class="modalbody" id="simpleBody"></div></div></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script nonce="{{CSP_NONCE}}">
-    const PAGE_SIZE = 5;
-    const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
-    let activeTag = 'all';
-    let page = 0;
-    let stories = [];
-    let interviewId = null;
-    let selectedStoryImage = null;
-    let storyImagePreviewUrl = null;
+    const CSRF=document.querySelector('meta[name="csrf-token"]').content;
+    const state={me:null,stories:[],family:[],people:[],albums:[],capsules:[],notifications:[],interviews:[],activeTag:'all',page:0,pageSize:5,interviewId:null,interviewTopic:'A childhood memory',pendingAudio:null,pendingTranscript:'',recordTarget:null,recorder:null,stream:null,chunks:[],searching:false};
+    const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+    const esc=value=>String(value??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    const tags=value=>String(value||'').split(',').map(x=>x.trim()).filter(Boolean);
+    const dateText=unix=>unix?new Date(unix*1000).toLocaleDateString(undefined,{dateStyle:'medium'}):'';
+    function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),3200)}
+    async function api(path,options={}){const opts={...options,headers:new Headers(options.headers||{})};const method=(opts.method||'GET').toUpperCase();if(!['GET','HEAD','OPTIONS'].includes(method))opts.headers.set('X-CSRF-Token',CSRF);const response=await fetch(path,opts);if(!response.ok){let message='Something went wrong.';try{message=(await response.json()).detail||message}catch{}throw new Error(message)}const type=response.headers.get('content-type')||'';return type.includes('json')?response.json():response}
+    function openModal(id){$('#'+id).classList.add('open');setTimeout(()=>$('#'+id+' input, #'+id+' textarea, #'+id+' button')?.focus(),30)}
+    function closeModal(id){$('#'+id).classList.remove('open')}
+    function go(view){$$('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+view));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===view));const copy={home:['Your archive','Keep the moments that made your family.'],stories:['Stories','Search, read, edit, and share family memories.'],timeline:['Timeline & places','Follow your family across years and locations.'],family:['Family','People, relationships, and archive permissions.'],albums:['Albums','Photographs and voices arranged together.'],capsules:['Capsules','Messages made for the future.'],interview:['AI interview','Talk naturally and uncover the details.'],notifications:['Notifications','Recent activity in your archive.'],settings:['Settings','Privacy, accessibility, and data ownership.']}[view];$('#viewTitle').textContent=copy[0];$('#viewSubtitle').textContent=copy[1];history.replaceState(null,'','#'+view);window.scrollTo({top:0,behavior:'smooth'})}
 
-    const esc = (s) => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    function storyCard(story){const cover=story.image_url||story.media?.find(x=>x.kind==='image')?.url;return `<article class="card story" id="story-${story.id}">${cover?`<img class="story-cover" src="${esc(cover)}" alt="Photo from ${esc(story.title)}" loading="lazy">`:'<div class="story-cover"></div>'}<div class="story-body"><div class="story-meta"><span>${esc(story.author?.name||'Family')}</span><span>${story.year||dateText(story.created_at)}</span></div><h3>${esc(story.title)}</h3><div class="story-copy">${esc(story.content)}</div><div class="filterbar" style="padding:11px 0 0">${(story.tags||[]).slice(0,4).map(t=>`<span class="chip">${esc(t)}</span>`).join('')}</div><div class="story-actions"><span class="story-meta">${esc(story.location||'')}${story.media?.length?` · ${story.media.length} media`:''}</span><div class="actions"><button class="btn secondary small" data-read="${story.id}">Read</button>${story.can_edit?`<button class="btn secondary small" data-edit="${story.id}">Edit</button>`:''}</div></div></div></article>`}
+    function renderStories(){const filtered=state.activeTag==='all'?state.stories:state.stories.filter(s=>(s.tags||[]).some(t=>t.toLowerCase()===state.activeTag));const pages=Math.max(1,Math.ceil(filtered.length/state.pageSize));state.page=Math.min(state.page,pages-1);const shown=filtered.slice(state.page*state.pageSize,(state.page+1)*state.pageSize);$('#library').innerHTML=shown.length?shown.map(storyCard).join(''):'<div class="card empty span2">No memories match this view.</div>';const allTags=[...new Set(state.stories.flatMap(s=>s.tags||[]))].sort();$('#tagFilters').innerHTML=['all',...allTags].map(t=>`<button class="filterchip ${state.activeTag===t.toLowerCase()?'active':''}" data-tag="${esc(t.toLowerCase())}">${esc(t)}</button>`).join('');$('#pager').innerHTML=`<button class="btn secondary small" id="prevPage" ${state.page===0?'disabled':''}>Previous</button><span>Page ${state.page+1} of ${pages}</span><button class="btn secondary small" id="nextPage" ${state.page>=pages-1?'disabled':''}>Next</button>`;$('#recentStories').innerHTML=state.stories.slice(0,2).map(storyCard).join('')||'<div class="card empty span2">Your first memory starts here.</div>';bindStoryActions()}
+    function bindStoryActions(){$$('[data-read]').forEach(b=>b.onclick=()=>openReader(Number(b.dataset.read)));$$('[data-edit]').forEach(b=>b.onclick=()=>openEditor(Number(b.dataset.edit)));$$('[data-tag]').forEach(b=>b.onclick=()=>{state.activeTag=b.dataset.tag;state.page=0;renderStories()});$('#prevPage')?.addEventListener('click',()=>{state.page--;renderStories()});$('#nextPage')?.addEventListener('click',()=>{state.page++;renderStories()})}
+    function renderTimeline(){const events=state.stories.filter(s=>s.year).sort((a,b)=>a.year-b.year);$('#timeline').innerHTML=events.length?events.map(s=>`<button class="card event" data-read="${s.id}" style="text-align:left;border:1px solid var(--line)"><span class="event-year">${s.year}</span><h3>${esc(s.title)}</h3><span class="story-meta">${esc(s.location||'')}</span></button>`).join(''):'<div class="empty">Add years to stories to build the timeline.</div>';const mapped=state.stories.filter(s=>Number.isFinite(s.latitude)&&Number.isFinite(s.longitude));$('#memoryMap').innerHTML=mapped.length?mapped.map(s=>`<button class="map-point" data-read="${s.id}" style="left:${((s.longitude+180)/360)*100}%;top:${((90-s.latitude)/180)*100}%">${esc(s.location||s.title)}</button>`).join(''):'<div class="empty" style="position:relative">Add optional coordinates to place memories on the map.</div>';bindStoryActions()}
+    function renderFamily(){const roots=state.people.filter(p=>!p.parent_id||!state.people.some(x=>x.id===p.parent_id));const node=p=>`<div class="card person"><div class="avatar">${esc(p.name.split(/\s+/).map(x=>x[0]).join('').slice(0,2))}</div><strong>${esc(p.name)}</strong><small>${esc(p.relation||'Family')}${p.birth_year?' · '+p.birth_year:''}</small></div>`;$('#familyTree').innerHTML=(roots.length?roots:state.people).map((p,i)=>node(p)+(i<roots.length-1?'<div class="tree-link"></div>':'')).join('')||'<div class="empty">Add the first person to begin your family tree.</div>';$('#familyMembers').innerHTML=state.family.length?state.family.map(m=>`<div class="card pad"><div class="avatar" style="margin:0">${esc((m.name||'F')[0])}</div><h3>${esc(m.name||'Family member')}</h3><p class="story-meta">${esc(m.email||'')}</p><label class="field">Access to your stories<select data-role-user="${m.id}"><option value="viewer" ${m.role==='viewer'?'selected':''}>Viewer</option><option value="contributor" ${m.role==='contributor'?'selected':''}>Contributor</option><option value="editor" ${m.role==='editor'?'selected':''}>Editor</option></select></label></div>`).join(''):'<div class="card empty">Invite a relative to create a shared archive.</div>';$$('[data-role-user]').forEach(s=>s.onchange=async()=>{try{await api(`/api/archive/family/${s.dataset.roleUser}/role`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:s.value})});toast('Family permission updated')}catch(e){toast(e.message)}});$('#interviewCollaborator').innerHTML='<option value="">Add collaborator...</option>'+state.family.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('')}
+    function renderAlbums(){$('#albums').innerHTML=state.albums.length?state.albums.map(a=>`<article class="card"><div class="album-cover">${a.media.slice(0,4).map(m=>m.kind==='image'?`<img src="${m.url}" alt="${esc(m.caption||a.title)}">`:'<div class="empty">Audio</div>').join('')||'<div class="empty span2">Empty album</div>'}</div><div class="pad"><h3>${esc(a.title)}</h3><p class="story-meta">${esc(a.description||'')}${a.media.length?' · '+a.media.length+' items':''}</p><button class="btn secondary small" data-album="${a.id}">Add media</button></div></article>`).join(''):'<div class="card empty">Create an album after adding photographs or audio to stories.</div>';$$('[data-album]').forEach(b=>b.onclick=()=>showAlbumMedia(Number(b.dataset.album)))}
+    function renderCapsules(){$('#capsules').innerHTML=state.capsules.length?state.capsules.map(c=>`<article class="card capsule"><span class="eyebrow">${c.unlocked?'Ready to read':'Sealed until '+dateText(c.unlock_at)}</span><h3>${esc(c.title)}</h3><p class="${c.unlocked?'':'locked'}">${esc(c.content||'This message is waiting for its moment.')}</p></article>`).join(''):'<div class="card empty">No capsules yet. Write something for a future day.</div>'}
+    function renderNotifications(){const unread=state.notifications.filter(n=>!n.read).length;$('#notificationBadge').textContent=unread;$('#notificationBadge').classList.toggle('hidden',!unread);$('#notifications').innerHTML=state.notifications.length?state.notifications.map(n=>`<button class="notice ${n.read?'':'unread'}" data-notice-link="${esc(n.link||'')}" style="width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left"><div><strong>${esc(n.message)}</strong><div class="story-meta">${dateText(n.created_at)}</div></div><span class="chip">${esc(n.kind)}</span></button>`).join(''):'<div class="empty">You are all caught up.</div>';$$('[data-notice-link]').forEach(b=>b.onclick=()=>{const link=b.dataset.noticeLink;if(link.startsWith('#interview-'))loadInterview(Number(link.split('-').pop()));else if(link.startsWith('#story-'))openReader(Number(link.split('-').pop()))})}
+    function renderInterviewList(){let box=$('#sharedInterviews');if(!box){box=document.createElement('div');box.id='sharedInterviews';box.style.marginTop='18px';$('.templates').append(box)}box.innerHTML=state.interviews.length?`<strong>Recent conversations</strong>${state.interviews.slice(0,5).map(i=>`<button class="template" data-load-interview="${i.id}">${esc(i.topic||'Untitled conversation')}<small style="display:block">${esc(i.status)}</small></button>`).join('')}`:'';$$('[data-load-interview]').forEach(b=>b.onclick=()=>loadInterview(Number(b.dataset.loadInterview)))}
+    function renderStats(){const media=state.stories.reduce((n,s)=>n+(s.media?.length||0)+(s.image_url?1:0),0);$('#storyCount').textContent=state.stories.length;$('#peopleCount').textContent=state.people.length;$('#mediaCount').textContent=media;$('#capsuleCount').textContent=state.capsules.length;$('#libraryMeta').textContent=`${state.stories.length} memories across ${state.family.length+1} family members`}
 
-    function parseTags(s) {
-      return String(s || '').split(',').map(t => t.trim()).filter(Boolean);
+    async function loadAll(){const [me,dash,stories,family,people,albums,capsules,notifications,interviews]=await Promise.all([api('/api/me'),api('/api/dashboard'),api('/api/stories'),api('/api/family'),api('/api/archive/people'),api('/api/archive/albums'),api('/api/archive/capsules'),api('/api/archive/notifications'),api('/api/archive/interviews')]);state.me=me.user;state.stories=stories.stories||[];state.family=family.family||[];state.people=people.people||[];state.albums=albums.albums||[];state.capsules=capsules.capsules||[];state.notifications=notifications.notifications||[];state.interviews=interviews.interviews||[];$('#meChip').textContent=state.me.name||'Signed in';$('#meEmail').textContent=state.me.email||'';renderStories();renderTimeline();renderFamily();renderAlbums();renderCapsules();renderNotifications();renderInterviewList();renderStats()}
+
+    async function openReader(id){const story=state.stories.find(s=>s.id===id);if(!story)return;const media=[...(story.image_url?[{id:'legacy',kind:'image',url:story.image_url,caption:''}]:[]),...(story.media||[])];$('#readerBody').innerHTML=`<span class="eyebrow">${esc(story.author?.name||'Family')} ${story.year?'· '+story.year:''}</span><h1 class="reader-title">${esc(story.title)}</h1><div class="story-meta">${esc(story.location||'')} ${story.language?'· Original language: '+esc(story.language):''}</div><div class="gallery" style="margin:18px 0">${media.filter(m=>m.kind==='image').map(m=>`<img src="${m.url}" alt="${esc(m.caption||story.title)}">`).join('')}</div>${media.filter(m=>m.kind==='audio').map(m=>`<div><audio class="audio" controls src="${m.url}"></audio>${m.transcript?`<details><summary>Audio transcript</summary><p>${esc(m.transcript)}</p></details>`:''}</div>`).join('')}<div class="reader-copy">${esc(story.content)}</div><div class="reader-tools"><button class="btn secondary small" id="readAloudBtn">Read aloud</button>${story.can_edit?`<button class="btn secondary small" id="readerEditBtn">Edit</button><button class="btn secondary small" id="historyBtn">Version history</button>`:''}<button class="btn secondary small" data-react="heart">Heart</button><button class="btn secondary small" data-react="applause">Applaud</button></div><div class="card pad"><div class="field"><label for="translationLanguage">Read in another language</label><div style="display:flex;gap:8px"><input id="translationLanguage" placeholder="Tamil, Hindi, French..."><button class="btn small" id="translateBtn">Translate</button></div></div><div id="translationResult" class="reader-copy" style="margin-top:13px"></div></div><div class="comments" id="readerComments"></div><form id="commentForm" style="display:flex;gap:8px;margin-top:10px"><input id="commentInput" maxlength="2000" placeholder="Add a family comment"><button class="btn small">Comment</button></form>`;openModal('readerModal');$('#readAloudBtn').onclick=()=>{speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(story.title+'. '+story.content))};$('#readerEditBtn')?.addEventListener('click',()=>{closeModal('readerModal');openEditor(id)});$('#historyBtn')?.addEventListener('click',()=>showHistory(id));$$('[data-react]').forEach(b=>b.onclick=async()=>{await api(`/api/archive/stories/${id}/reaction`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({emoji:b.dataset.react})});toast('Reaction saved');loadSocial(id)});$('#commentForm').onsubmit=async e=>{e.preventDefault();const content=$('#commentInput').value.trim();if(!content)return;await api(`/api/archive/stories/${id}/comments`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content})});$('#commentInput').value='';loadSocial(id)};$('#translateBtn').onclick=async()=>{const language=$('#translationLanguage').value.trim();if(!language)return;$('#translationResult').textContent='Translating...';try{const result=await api(`/api/archive/stories/${id}/translate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({language})});$('#translationResult').innerHTML=`<h3>${esc(result.title)}</h3>${esc(result.content).replace(/\n/g,'<br>')}`}catch(e){$('#translationResult').textContent=e.message}};loadSocial(id)}
+    async function loadSocial(id){const data=await api(`/api/archive/stories/${id}/social`);$('#readerComments').innerHTML=`<strong>Family conversation</strong>${data.comments.map(c=>`<div class="comment"><strong>${esc(c.author)}</strong><div>${esc(c.content)}</div></div>`).join('')||'<div class="story-meta">No comments yet.</div>'}`}
+    async function showHistory(id){const data=await api(`/api/archive/stories/${id}/revisions`);$('#simpleTitle').textContent='Version history';$('#simpleBody').innerHTML=data.revisions.length?data.revisions.map(r=>`<div class="card pad" style="margin-bottom:9px"><strong>${esc(r.title)}</strong><div class="story-meta">${dateText(r.created_at)}</div><p>${esc(r.content).slice(0,180)}</p><button class="btn secondary small" data-restore-version="${r.id}">Restore this version</button></div>`).join(''):'<div class="empty">No earlier versions.</div>';openModal('simpleModal');$$('[data-restore-version]').forEach(b=>b.onclick=async()=>{await api(`/api/archive/stories/${id}/revisions/${b.dataset.restoreVersion}/restore`,{method:'POST'});closeModal('simpleModal');closeModal('readerModal');await loadAll();toast('Earlier version restored')})}
+
+    function populatePeopleSelect(selected=[]){let select=$('#storyPeople');if(!select){const field=document.createElement('div');field.className='field span2';field.innerHTML='<label for="storyPeople">People in this memory</label><select id="storyPeople" multiple size="3"></select><small class="story-meta">Hold Ctrl or Command to select more than one person.</small>';$('#storyLocation').closest('.field').after(field);select=$('#storyPeople')}select.innerHTML=state.people.map(p=>`<option value="${p.id}" ${selected.includes(p.id)?'selected':''}>${esc(p.name)} · ${esc(p.relation||'Family')}</option>`).join('')}
+    function resetComposer(){state.pendingAudio=null;state.pendingTranscript='';$('#storyForm').reset();populatePeopleSelect();$('#editStoryId').value='';$('#storyModalTitle').textContent='Add a memory';$('#saveStoryBtn').textContent='Save memory';$('#deleteStoryBtn').classList.add('hidden');$('#draftStatus').textContent='';$('#storyMicStatus').textContent='Microphone ready'}
+    async function openComposer(){resetComposer();openModal('storyModal');const local=localStorage.getItem('mw_story_draft');if(local){try{const d=JSON.parse(local);$('#storyTitle').value=d.title||'';$('#storyContent').value=d.content||'';$('#storyTags').value=d.tags||'';$('#storyYear').value=d.year||'';$('#storyLocation').value=d.location||'';$('#draftStatus').textContent='Restored your autosaved draft.'}catch{}}}
+    function openEditor(id){const s=state.stories.find(x=>x.id===id);if(!s)return;resetComposer();populatePeopleSelect((s.people||[]).map(p=>p.id));$('#editStoryId').value=id;$('#storyModalTitle').textContent='Edit memory';$('#saveStoryBtn').textContent='Save changes';$('#deleteStoryBtn').classList.remove('hidden');$('#storyKind').value=s.kind;$('#storyTitle').value=s.title;$('#storyContent').value=s.content;$('#storyTags').value=(s.tags||[]).join(', ');$('#storyYear').value=s.year||'';$('#storyLocation').value=s.location||'';$('#storyLat').value=s.latitude??'';$('#storyLng').value=s.longitude??'';$('#storyLanguage').value=s.language||'';openModal('storyModal')}
+    function composerPayload(){return{kind:$('#storyKind').value,title:$('#storyTitle').value.trim(),content:$('#storyContent').value.trim(),tags:tags($('#storyTags').value),year:$('#storyYear').value?Number($('#storyYear').value):null,location:$('#storyLocation').value.trim()||null,latitude:$('#storyLat').value?Number($('#storyLat').value):null,longitude:$('#storyLng').value?Number($('#storyLng').value):null,language:$('#storyLanguage').value.trim()||null}}
+    async function saveStory(e){
+      e.preventDefault();const payload=composerPayload();if(!payload.title||!payload.content)return;
+      const button=$('#saveStoryBtn');button.disabled=true;button.textContent='Saving...';
+      try{
+        let id=Number($('#editStoryId').value);
+        if(id){await api(`/api/archive/stories/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})}
+        else{try{const result=await api('/api/stories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});id=result.id}catch(error){if(!navigator.onLine){queueOffline(payload);toast('Saved offline. It will sync later.');closeModal('storyModal');return}throw error}}
+        for(const personId of [...($('#storyPeople')?.selectedOptions||[])].map(o=>Number(o.value))){await api(`/api/archive/stories/${id}/people/${personId}`,{method:'POST'})}
+        for(const photo of [...$('#storyImage').files]){const form=new FormData();form.append('file',photo);form.append('caption',payload.title);form.append('location',payload.location||'');form.append('taken_at',payload.year?String(payload.year):'');await api(`/api/archive/stories/${id}/media`,{method:'POST',body:form})}
+        const chosenAudio=$('#storyAudio').files[0];const audio=chosenAudio||state.pendingAudio;
+        if(audio){const form=new FormData();form.append('file',audio,chosenAudio?.name||'recorded-memory.webm');form.append('transcript',state.pendingTranscript||'');await api(`/api/archive/stories/${id}/media`,{method:'POST',body:form})}
+        localStorage.removeItem('mw_story_draft');await api('/api/archive/drafts/story-composer',{method:'DELETE'}).catch(()=>{});closeModal('storyModal');await loadAll();toast('Memory saved')
+      }catch(error){$('#draftStatus').textContent=error.message}
+      finally{button.disabled=false;button.textContent=$('#editStoryId').value?'Save changes':'Save memory'}
     }
+    function queueOffline(payload){const queue=JSON.parse(localStorage.getItem('mw_offline_queue')||'[]');queue.push({payload,queuedAt:Date.now()});localStorage.setItem('mw_offline_queue',JSON.stringify(queue));updateOfflineStatus()}
+    async function syncOffline(){if(!navigator.onLine)return toast('Still offline');const queue=JSON.parse(localStorage.getItem('mw_offline_queue')||'[]');const remaining=[];for(const item of queue){try{await api('/api/stories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(item.payload)})}catch{remaining.push(item)}}localStorage.setItem('mw_offline_queue',JSON.stringify(remaining));updateOfflineStatus();if(!remaining.length){await loadAll();toast('Offline memories synced')}}
+    function updateOfflineStatus(){const count=JSON.parse(localStorage.getItem('mw_offline_queue')||'[]').length;$('#offlineStatus').textContent=count?`${count} offline ${count===1?'memory':'memories'} waiting to sync.`:'Drafts autosave locally and sync when your connection returns.'}
+    let draftTimer;function autosave(){clearTimeout(draftTimer);draftTimer=setTimeout(async()=>{if(!$('#storyModal').classList.contains('open')||$('#editStoryId').value)return;const d={title:$('#storyTitle').value,content:$('#storyContent').value,tags:$('#storyTags').value,year:$('#storyYear').value,location:$('#storyLocation').value};localStorage.setItem('mw_story_draft',JSON.stringify(d));$('#draftStatus').textContent='Draft saved';api('/api/archive/drafts/story-composer',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:d})}).catch(()=>{})},900)}
 
-    function getBaseTags(items) {
-      const tags = new Set();
-      (items || []).forEach(it => (it.tags || []).forEach(t => tags.add(String(t))));
-      const ordered = Array.from(tags).filter(Boolean).sort((a,b) => a.localeCompare(b));
-      return ['all', ...ordered];
-    }
+    async function setupRecorder(button,status,onTranscript,onBlob){if(!navigator.mediaDevices||!window.MediaRecorder){button.disabled=true;status.textContent='Voice recording is unavailable in this browser';return}button.onclick=async()=>{if(state.recorder?.state==='recording'){state.recorder.stop();return}try{state.stream=await navigator.mediaDevices.getUserMedia({audio:true});const mime=['audio/webm;codecs=opus','audio/webm','audio/mp4'].find(type=>MediaRecorder.isTypeSupported(type))||'';state.chunks=[];state.recorder=new MediaRecorder(state.stream,mime?{mimeType:mime,audioBitsPerSecond:32000}:{audioBitsPerSecond:32000});state.recorder.ondataavailable=e=>{if(e.data.size)state.chunks.push(e.data)};state.recorder.onstop=async()=>{button.textContent=button=== $('#storyMicBtn')?'Record voice':'●';button.disabled=true;status.textContent='Transcribing for review...';state.stream.getTracks().forEach(t=>t.stop());const blob=new Blob(state.chunks,{type:state.recorder.mimeType||'audio/webm'});try{const form=new FormData();form.append('audio',blob,'memory.webm');const result=await api('/api/transcribe',{method:'POST',body:form});onBlob(blob);onTranscript(result.text||'');status.textContent='Review the transcript before using it.'}catch(e){status.textContent=e.message}finally{button.disabled=false;state.recorder=null}};state.recorder.start(500);button.textContent='Stop';status.textContent='Listening...'}catch(e){status.textContent=e.name==='NotAllowedError'?'Microphone permission was denied':e.message}}}
+    function showTranscriptReview(text,target){state.recordTarget=target;if(target==='story'){$('#simpleTitle').textContent='Review voice transcript';$('#simpleBody').innerHTML=`<p class="story-meta">Correct any uncertain words before adding this transcript to the memory. The original recording will be preserved with the story.</p><textarea id="storyTranscriptReview" style="min-height:220px">${esc(text)}</textarea><div class="actions" style="margin-top:12px"><button class="btn" id="useStoryTranscript">Use transcript</button><button class="btn secondary" data-close="simpleModal">Discard</button></div>`;openModal('simpleModal');$('#useStoryTranscript').onclick=()=>{const reviewed=$('#storyTranscriptReview').value.trim();$('#storyContent').value=[$('#storyContent').value.trim(),reviewed].filter(Boolean).join('\n\n');state.pendingTranscript=reviewed;closeModal('simpleModal');toast('Reviewed transcript added')}}else{$('#reviewText').value=text;$('#transcriptReview').classList.remove('hidden');go('interview')}}
 
-    function filtered() {
-      if (activeTag === 'all') return stories;
-      return stories.filter(s => (s.tags || []).some(t => String(t).toLowerCase() === activeTag.toLowerCase()));
-    }
+    async function runSearch(){const p=new URLSearchParams();if($('#searchQ').value)p.set('q',$('#searchQ').value);if($('#searchTag').value)p.set('tag',$('#searchTag').value);if($('#searchPerson').value)p.set('person',$('#searchPerson').value);if($('#searchLocation').value)p.set('location',$('#searchLocation').value);if($('#searchYear').value){p.set('year_from',$('#searchYear').value);p.set('year_to',$('#searchYear').value)}const data=await api('/api/archive/search?'+p);state.stories=data.stories.map(s=>({...s,author:{name:s.author},media:[],can_edit:false}));state.page=0;renderStories();$('#libraryMeta').textContent=`${state.stories.length} search results`}
+    async function showTrash(){const data=await api('/api/archive/stories/deleted');$('#simpleTitle').textContent='Recently deleted';$('#simpleBody').innerHTML=data.stories.length?data.stories.map(s=>`<div class="card pad" style="margin-bottom:8px"><strong>${esc(s.title)}</strong><span class="story-meta">Deleted ${dateText(s.deleted_at)}</span><button class="btn secondary small" data-restore="${s.id}" style="float:right">Restore</button></div>`).join(''):'<div class="empty">Nothing here.</div>';openModal('simpleModal');$$('[data-restore]').forEach(b=>b.onclick=async()=>{await api(`/api/archive/stories/${b.dataset.restore}/restore`,{method:'POST'});closeModal('simpleModal');await loadAll();toast('Memory restored')})}
+    async function addPerson(){const options=state.people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');$('#simpleTitle').textContent='Add a person';$('#simpleBody').innerHTML=`<form id="personForm" class="formgrid"><div class="field span2"><label>Name</label><input id="personName" required maxlength="255"></div><div class="field"><label>Relationship</label><input id="personRelation" placeholder="Grandmother, uncle..."></div><div class="field"><label>Parent</label><select id="personParent"><option value="">Not specified</option>${options}</select></div><div class="field"><label>Birth year</label><input id="personBirth" type="number" min="1000" max="2100"></div><div class="field"><label>Death year</label><input id="personDeath" type="number" min="1000" max="2100"></div><div class="field span2"><label>Short biography</label><textarea id="personBio"></textarea></div><button class="btn">Add to tree</button></form>`;openModal('simpleModal');$('#personForm').onsubmit=async e=>{e.preventDefault();await api('/api/archive/people',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:$('#personName').value,relation:$('#personRelation').value||null,parent_id:$('#personParent').value?Number($('#personParent').value):null,birth_year:$('#personBirth').value?Number($('#personBirth').value):null,death_year:$('#personDeath').value?Number($('#personDeath').value):null,bio:$('#personBio').value||null})});closeModal('simpleModal');await loadAll();toast('Person added')}}
+    async function createAlbum(){const title=prompt('Album title');if(!title)return;await api('/api/archive/albums',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,description:''})});await loadAll();toast('Album created')}
+    function showAlbumMedia(albumId){const media=state.stories.flatMap(s=>s.media||[]);$('#simpleTitle').textContent='Add media to album';$('#simpleBody').innerHTML=media.length?media.map(m=>`<button class="card pad" data-add-media="${m.id}" style="margin:5px;width:calc(50% - 12px);text-align:left">${m.kind==='image'?`<img src="${m.url}" style="width:100%;height:100px;object-fit:cover;border-radius:10px" alt="">`:'Audio recording'}<span>${esc(m.caption||m.kind)}</span></button>`).join(''):'<div class="empty">Add media to a story first.</div>';openModal('simpleModal');$$('[data-add-media]').forEach(b=>b.onclick=async()=>{await api(`/api/archive/albums/${albumId}/items`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({media_id:Number(b.dataset.addMedia)})});closeModal('simpleModal');await loadAll();toast('Added to album')})}
+    async function createCapsule(){const family=state.family.map(m=>`<option value="${m.id}">${esc(m.name)}</option>`).join('');$('#simpleTitle').textContent='Create a memory capsule';$('#simpleBody').innerHTML=`<form id="capsuleForm" class="formgrid"><div class="field span2"><label>Title</label><input id="capsuleTitle" required maxlength="140"></div><div class="field span2"><label>Private message</label><textarea id="capsuleContent" required></textarea></div><div class="field"><label>Recipient</label><select id="capsuleRecipient"><option value="">Only me</option>${family}</select></div><div class="field"><label>Unlock date</label><input id="capsuleDate" type="date" required></div><button class="btn">Seal capsule</button></form>`;openModal('simpleModal');$('#capsuleForm').onsubmit=async e=>{e.preventDefault();const unlock=Math.floor(new Date($('#capsuleDate').value+'T00:00:00').getTime()/1000);await api('/api/archive/capsules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:$('#capsuleTitle').value,content:$('#capsuleContent').value,recipient_user_id:$('#capsuleRecipient').value?Number($('#capsuleRecipient').value):null,unlock_at:unlock})});closeModal('simpleModal');await loadAll();toast('Memory capsule sealed')}}
 
-    function render() {
-      const library = document.getElementById('library');
-      const items = filtered();
-      const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
-      page = Math.min(page, totalPages - 1);
-      const start = page * PAGE_SIZE;
-      const end = start + PAGE_SIZE;
-      const pageItems = items.slice(start, end);
+    function addMessage(role,text,typing=false){const div=document.createElement('div');div.className='message '+(role==='user'?'user':'');div.textContent=typing?'Memory Weaver is thinking':text;if(typing){div.classList.add('dottyping');div.id='typing'}$('#interviewChat').append(div);$('#interviewChat').scrollTop=$('#interviewChat').scrollHeight}
+    async function loadInterview(id){const result=await api(`/api/archive/interviews/${id}`);state.interviewId=result.id;$('#interviewChat').innerHTML='';result.messages.forEach(m=>addMessage(m.role==='user'?'user':'assistant',m.content));$('#sendInterviewBtn').textContent='Send';$('#finishInterviewBtn').disabled=result.status!=='active';go('interview')}
+    async function interviewSend(){const input=$('#interviewInput');const message=input.value.trim();const button=$('#sendInterviewBtn');button.disabled=true;try{if(!state.interviewId){addMessage('assistant','',true);const result=await api('/api/interviews',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic:message||state.interviewTopic})});$('#typing')?.remove();state.interviewId=result.interview_id;addMessage('assistant',result.reply);button.textContent='Send';$('#finishInterviewBtn').disabled=false}else{if(!message)return;input.value='';addMessage('user',message);addMessage('assistant','',true);const result=await api(`/api/interviews/${state.interviewId}/messages`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message})});$('#typing')?.remove();addMessage('assistant',result.reply)}}catch(e){$('#typing')?.remove();toast(e.message)}finally{button.disabled=false}}
+    async function finishInterview(){if(!state.interviewId)return;const result=await api(`/api/interviews/${state.interviewId}/finalize`,{method:'POST'});addMessage('assistant',`Saved “${result.story.title}” to your archive.`);state.interviewId=null;$('#finishInterviewBtn').disabled=true;$('#sendInterviewBtn').textContent='Begin conversation';await loadAll();toast('Interview saved as a story')}
 
-      const filters = document.getElementById('tagFilters');
-      const baseTags = getBaseTags(stories);
-      filters.innerHTML = baseTags.map(t => `<button class=\"filter-chip ${t === activeTag ? 'active':''}\" data-tag=\"${esc(t)}\" type=\"button\">${esc(t)}</button>`).join('');
-      filters.querySelectorAll('[data-tag]').forEach(btn => btn.addEventListener('click', () => { activeTag = btn.dataset.tag; page = 0; render(); }));
+    async function deleteAccount(){const confirmation=prompt('Type DELETE MY ARCHIVE to permanently erase your account and owned data.');if(confirmation!=='DELETE MY ARCHIVE')return;await api('/api/archive/account',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({confirmation})});location.href='/'}
 
-      const pager = `
-        <div class="pagerbar">
-          <button class="btn ghost" id="prevBtn" type="button" ${page<=0?'disabled':''}>Prev</button>
-          <div class="pagerlabel">Page ${page+1} / ${totalPages}</div>
-          <button class="btn ghost" id="nextBtn" type="button" ${page>=totalPages-1?'disabled':''}>Next</button>
-        </div>
-      `;
-
-      const body = pageItems.length ? pageItems.map(s => `
-        <div class="item">
-          ${s.image_url ? `<img class="story-photo" src="${esc(s.image_url)}" alt="Photo for ${esc(s.title)}" loading="lazy">` : ''}
-          <div class="itemhead">
-            <strong>${esc(s.title)}</strong>
-            <span class="tiny">${esc(s.kind)}${s.year ? ' / ' + esc(s.year) : ''}</span>
-          </div>
-          <div class="muted" style="margin-top:8px; line-height:1.6;">${esc(s.content).replace(/\\n/g,'<br>')}</div>
-          <div class="tagrow">${(s.tags||[]).slice(0,6).map(t => `<span class=\"tag\">${esc(t)}</span>`).join('')}</div>
-          <div class="tiny" style="margin-top:10px;">${esc((s.author && s.author.name) || '')}</div>
-        </div>
-      `).join('') : '<div class="muted">No stories yet. Add your first one.</div>';
-
-      library.innerHTML = pager + body;
-      const prev = document.getElementById('prevBtn');
-      const next = document.getElementById('nextBtn');
-      if (prev) prev.addEventListener('click', () => { page = Math.max(0, page-1); render(); });
-      if (next) next.addEventListener('click', () => { page = Math.min(totalPages-1, page+1); render(); });
-    }
-
-    async function api(path, opts = {}) {
-      const options = {...opts};
-      const method = String(options.method || 'GET').toUpperCase();
-      options.headers = new Headers(options.headers || {});
-      if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-        options.headers.set('X-CSRF-Token', CSRF_TOKEN);
-      }
-      const res = await fetch(path, options);
-      if (!res.ok) {
-        let msg = 'Something went wrong. Please try again.';
-        try { msg = (await res.json()).detail || msg; } catch {}
-        throw new Error(msg);
-      }
-      return res.json();
-    }
-
-    function setupRecorder(buttonId, statusId, onTranscript) {
-      const MAX_AUDIO_BYTES = 3.8 * 1024 * 1024;
-      const MAX_RECORDING_MS = 5 * 60 * 1000;
-      const button = document.getElementById(buttonId);
-      const status = document.getElementById(statusId);
-      let recorder = null;
-      let stream = null;
-      let chunks = [];
-      let bytesRecorded = 0;
-      let stopTimer = null;
-
-      if (!navigator.mediaDevices || !window.MediaRecorder) {
-        button.disabled = true;
-        status.textContent = 'Voice recording is not supported in this browser';
-        return;
-      }
-
-      button.addEventListener('click', async () => {
-        if (recorder && recorder.state === 'recording') {
-          recorder.stop();
-          return;
-        }
-
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          const preferred = [
-            'audio/webm;codecs=opus',
-            'audio/webm',
-            'audio/mp4'
-          ].find(type => MediaRecorder.isTypeSupported(type));
-          const options = { audioBitsPerSecond: 32000 };
-          if (preferred) options.mimeType = preferred;
-          recorder = new MediaRecorder(stream, options);
-          chunks = [];
-          bytesRecorded = 0;
-          recorder.addEventListener('dataavailable', e => {
-            if (!e.data.size) return;
-            chunks.push(e.data);
-            bytesRecorded += e.data.size;
-            if (bytesRecorded >= MAX_AUDIO_BYTES && recorder.state === 'recording') {
-              status.textContent = 'Recording limit reached. Preparing transcript...';
-              recorder.stop();
-            }
-          });
-          recorder.addEventListener('stop', async () => {
-            if (stopTimer) clearTimeout(stopTimer);
-            button.disabled = true;
-            button.classList.remove('recording');
-            button.textContent = buttonId === 'storyMicBtn' ? 'Record voice' : 'Record reply';
-            status.textContent = 'Transcribing...';
-            if (stream) stream.getTracks().forEach(t => t.stop());
-
-            try {
-              const mime = recorder.mimeType || 'audio/webm';
-              const ext = mime.includes('mp4') ? 'm4a' : 'webm';
-              const blob = new Blob(chunks, { type: mime });
-              const form = new FormData();
-              form.append('audio', blob, `memory-recording.${ext}`);
-              const result = await api('/api/transcribe', { method: 'POST', body: form });
-              onTranscript(result.text || '');
-              status.textContent = 'Transcript added';
-            } catch (e) {
-              status.textContent = e.message;
-            } finally {
-              button.disabled = false;
-              recorder = null;
-              chunks = [];
-            }
-          });
-          recorder.start(500);
-          stopTimer = setTimeout(() => {
-            if (recorder && recorder.state === 'recording') {
-              status.textContent = 'Five-minute limit reached. Preparing transcript...';
-              recorder.stop();
-            }
-          }, MAX_RECORDING_MS);
-          button.classList.add('recording');
-          button.textContent = 'Stop recording';
-          status.textContent = 'Listening...';
-        } catch (e) {
-          status.textContent = e.name === 'NotAllowedError' ? 'Microphone permission was denied' : e.message;
-          if (stream) stream.getTracks().forEach(t => t.stop());
-        }
-      });
-    }
-
-    function addInterviewBubble(role, text, typing = false) {
-      const chat = document.getElementById('interviewChat');
-      const row = document.createElement('div');
-      row.className = `message-row ${role === 'user' ? 'user' : 'assistant'}`;
-      if (typing) row.id = 'interviewTyping';
-
-      const avatar = document.createElement('div');
-      avatar.className = 'message-avatar';
-      avatar.textContent = role === 'user' ? 'You' : 'MW';
-
-      const wrap = document.createElement('div');
-      wrap.className = 'message-wrap';
-      const name = document.createElement('div');
-      name.className = 'message-name';
-      name.textContent = role === 'user' ? 'You' : 'Memory Weaver';
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble';
-      if (typing) {
-        bubble.innerHTML = '<span class="typing-dots" aria-label="Memory Weaver is replying"><span></span><span></span><span></span></span>';
-      } else {
-        bubble.textContent = text;
-      }
-      wrap.append(name, bubble);
-      row.append(avatar, wrap);
-      chat.appendChild(row);
-      chat.scrollTop = chat.scrollHeight;
-    }
-
-    function setInterviewTyping(show) {
-      const current = document.getElementById('interviewTyping');
-      if (current) current.remove();
-      if (show) addInterviewBubble('assistant', '', true);
-    }
-
-    function resizeInterviewInput() {
-      const input = document.getElementById('interviewInput');
-      input.style.height = 'auto';
-      input.style.height = `${Math.min(input.scrollHeight, 180)}px`;
-    }
-
-    function resetInterviewUI() {
-      interviewId = null;
-      document.getElementById('interviewStart').classList.remove('hidden');
-      document.getElementById('interviewActive').classList.add('hidden');
-      document.getElementById('interviewComposer').classList.remove('hidden');
-      document.getElementById('interviewFinish').classList.remove('hidden');
-      document.getElementById('interviewChat').innerHTML = '';
-      document.getElementById('interviewInput').value = '';
-      document.getElementById('interviewMicStatus').textContent = 'Voice ready';
-      document.getElementById('conversationState').textContent = 'Conversation in progress';
-      resizeInterviewInput();
-      document.getElementById('interviewTopic').focus();
-    }
-
-    async function startInterview() {
-      const button = document.getElementById('startInterviewBtn');
-      button.disabled = true;
-      button.textContent = 'Opening conversation...';
-      document.getElementById('interviewStart').classList.add('hidden');
-      document.getElementById('interviewActive').classList.remove('hidden');
-      document.getElementById('interviewChat').innerHTML = '';
-      document.getElementById('conversationState').textContent = 'Memory Weaver is listening';
-      setInterviewTyping(true);
-      try {
-        const result = await api('/api/interviews', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ topic: document.getElementById('interviewTopic').value.trim() })
-        });
-        interviewId = result.interview_id;
-        setInterviewTyping(false);
-        addInterviewBubble('assistant', result.reply);
-        document.getElementById('conversationState').textContent = 'Conversation in progress';
-        document.getElementById('interviewInput').focus();
-      } catch (e) {
-        setInterviewTyping(false);
-        resetInterviewUI();
-        document.getElementById('interviewMicStatus').textContent = e.message;
-      } finally {
-        button.disabled = false;
-        button.textContent = 'Begin conversation';
-      }
-    }
-
-    async function sendInterviewMessage() {
-      if (!interviewId) return;
-      const input = document.getElementById('interviewInput');
-      const message = input.value.trim();
-      if (!message) return;
-      const button = document.getElementById('sendInterviewBtn');
-      input.value = '';
-      resizeInterviewInput();
-      addInterviewBubble('user', message);
-      button.disabled = true;
-      button.textContent = 'Sending...';
-      document.getElementById('conversationState').textContent = 'Memory Weaver is replying';
-      setInterviewTyping(true);
-      try {
-        const result = await api(`/api/interviews/${interviewId}/messages`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ message })
-        });
-        setInterviewTyping(false);
-        addInterviewBubble('assistant', result.reply);
-        document.getElementById('conversationState').textContent = 'Conversation in progress';
-      } catch (e) {
-        setInterviewTyping(false);
-        input.value = message;
-        resizeInterviewInput();
-        document.getElementById('conversationState').textContent = e.message;
-      } finally {
-        button.disabled = false;
-        button.textContent = 'Send';
-        input.focus();
-      }
-    }
-
-    async function finishInterview() {
-      if (!interviewId) return;
-      const button = document.getElementById('finishInterviewBtn');
-      button.disabled = true;
-      button.textContent = 'Shaping your story...';
-      document.getElementById('conversationState').textContent = 'Saving this memory';
-      try {
-        const result = await api(`/api/interviews/${interviewId}/finalize`, { method: 'POST' });
-        addInterviewBubble('assistant', `I saved "${result.story.title}" to your archive. You can find it with your other stories above.`);
-        interviewId = null;
-        document.getElementById('conversationState').textContent = 'Saved to your archive';
-        document.getElementById('interviewComposer').classList.add('hidden');
-        document.getElementById('interviewFinish').classList.add('hidden');
-        await load();
-      } catch (e) {
-        document.getElementById('conversationState').textContent = e.message;
-      } finally {
-        button.disabled = false;
-        button.textContent = 'Save this memory';
-      }
-    }
-
-    async function load() {
-      const me = await api('/api/me');
-      document.getElementById('meChip').textContent = me.user.name || 'Signed in';
-      const dash = await api('/api/dashboard');
-      document.getElementById('counts').textContent = `${dash.counts.stories} stories / ${dash.counts.family} relatives`;
-      const fam = await api('/api/family');
-      document.getElementById('familyList').innerHTML = fam.family.length
-        ? fam.family.map(u => `<div style=\"margin-bottom:8px;\">${esc(u.name || 'Member')}</div>`).join('')
-        : 'None yet.';
-      const list = await api('/api/stories');
-      stories = (list.stories || []).map(s => ({...s, tags: s.tags || []}));
-      render();
-
-      const invite = sessionStorage.getItem('mw_family_invite');
-      if (invite) {
-        try {
-          await api('/api/family/accept', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token: invite }) });
-          sessionStorage.removeItem('mw_family_invite');
-          await load();
-        } catch (e) {
-          sessionStorage.removeItem('mw_family_invite');
-          alert(e.message);
-        }
-      }
-    }
-
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      await api('/api/logout', { method:'POST' });
-      window.location.href = '/login';
-    });
-
-    document.getElementById('inviteBtn').addEventListener('click', async () => {
-      const inv = await api('/api/family/invite', { method:'POST' });
-      const link = window.location.origin + inv.url;
-      document.getElementById('inviteLink').innerHTML = `<a href=\"${esc(inv.url)}\">${esc(link)}</a>`;
-      try { await navigator.clipboard.writeText(link); } catch {}
-      alert('Invite link copied (if clipboard permissions allow).');
-    });
-
-    const modal = document.getElementById('composerModal');
-    document.getElementById('openComposerBtn').addEventListener('click', () => modal.classList.add('open'));
-    document.getElementById('closeComposerBtn').addEventListener('click', () => modal.classList.remove('open'));
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
-
-    document.getElementById('openInterviewBtn').addEventListener('click', () => {
-      document.getElementById('interviewSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      document.getElementById('interviewTopic').focus();
-    });
-    document.getElementById('startInterviewBtn').addEventListener('click', startInterview);
-    document.getElementById('sendInterviewBtn').addEventListener('click', sendInterviewMessage);
-    document.getElementById('finishInterviewBtn').addEventListener('click', finishInterview);
-    document.getElementById('restartInterviewBtn').addEventListener('click', resetInterviewUI);
-    document.querySelectorAll('[data-interview-topic]').forEach(button => {
-      button.addEventListener('click', () => {
-        document.getElementById('interviewTopic').value = button.dataset.interviewTopic;
-        startInterview();
-      });
-    });
-    document.getElementById('interviewInput').addEventListener('input', resizeInterviewInput);
-    document.getElementById('interviewInput').addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendInterviewMessage();
-      }
-    });
-
-    setupRecorder('storyMicBtn', 'storyMicStatus', text => {
-      const field = document.getElementById('storyContent');
-      field.value = [field.value.trim(), text.trim()].filter(Boolean).join(field.value.trim() ? '\n\n' : '');
-      field.focus();
-    });
-    setupRecorder('interviewMicBtn', 'interviewMicStatus', text => {
-      const field = document.getElementById('interviewInput');
-      field.value = [field.value.trim(), text.trim()].filter(Boolean).join(field.value.trim() ? ' ' : '');
-      resizeInterviewInput();
-      field.focus();
-    });
-
-    function clearStoryImage() {
-      selectedStoryImage = null;
-      document.getElementById('storyImage').value = '';
-      if (storyImagePreviewUrl) URL.revokeObjectURL(storyImagePreviewUrl);
-      storyImagePreviewUrl = null;
-      document.getElementById('storyImagePreview').classList.add('hidden');
-      document.getElementById('storyImagePreviewImg').removeAttribute('src');
-    }
-
-    document.getElementById('storyImage').addEventListener('change', e => {
-      const file = e.target.files && e.target.files[0];
-      const status = document.getElementById('storyFormStatus');
-      status.textContent = '';
-      if (!file) {
-        clearStoryImage();
-        return;
-      }
-      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-        status.textContent = 'Choose a JPG, PNG, or WebP image.';
-        clearStoryImage();
-        return;
-      }
-      if (file.size > 3 * 1024 * 1024) {
-        status.textContent = 'Choose an image smaller than 3 MB.';
-        clearStoryImage();
-        return;
-      }
-      clearStoryImage();
-      selectedStoryImage = file;
-      storyImagePreviewUrl = URL.createObjectURL(file);
-      document.getElementById('storyImagePreviewImg').src = storyImagePreviewUrl;
-      document.getElementById('storyImagePreview').classList.remove('hidden');
-    });
-    document.getElementById('removeStoryImageBtn').addEventListener('click', clearStoryImage);
-
-    document.getElementById('storyForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const form = e.currentTarget;
-      const fd = new FormData(form);
-      const button = document.getElementById('saveStoryBtn');
-      const status = document.getElementById('storyFormStatus');
-      button.disabled = true;
-      button.textContent = 'Saving...';
-      status.textContent = '';
-      try {
-        if (selectedStoryImage) {
-          fd.set('image', selectedStoryImage, selectedStoryImage.name);
-          await api('/api/stories/with-image', { method:'POST', body:fd });
-        } else {
-          const payload = {
-            kind: fd.get('kind') || 'memory',
-            title: fd.get('title') || '',
-            content: fd.get('content') || '',
-            tags: parseTags(fd.get('tags')),
-            year: (fd.get('year') && String(fd.get('year')).trim()) ? Number(fd.get('year')) : null
-          };
-          await api('/api/stories', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
-        }
-        form.reset();
-        clearStoryImage();
-        document.getElementById('storyMicStatus').textContent = 'Microphone ready';
-        modal.classList.remove('open');
-        await load();
-      } catch (error) {
-        status.textContent = error.message;
-      } finally {
-        button.disabled = false;
-        button.textContent = 'Save story';
-      }
-    });
-
-    document.querySelectorAll('[data-jump]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-jump');
-        const el = id ? document.getElementById(id) : null;
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    });
-
-    load().catch((e) => {
-      alert(e.message);
-      window.location.href = '/login';
-    });
+    $$('.navbtn,.mobile-nav button').forEach(b=>b.onclick=()=>go(b.dataset.view));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));$$('[data-open-composer]').forEach(b=>b.onclick=openComposer);$$('[data-close]').forEach(b=>b.onclick=()=>closeModal(b.dataset.close));$$('.modalback').forEach(m=>m.onclick=e=>{if(e.target===m)closeModal(m.id)});$('#openComposerBtn').onclick=openComposer;$('#storyForm').onsubmit=saveStory;['storyTitle','storyContent','storyTags','storyYear','storyLocation'].forEach(id=>$('#'+id).addEventListener('input',autosave));$('#deleteStoryBtn').onclick=async()=>{const id=$('#editStoryId').value;if(!id||!confirm('Move this memory to recently deleted?'))return;await api(`/api/archive/stories/${id}`,{method:'DELETE'});closeModal('storyModal');await loadAll();toast('Memory moved to recently deleted')};$('#searchBtn').onclick=runSearch;$('#trashBtn').onclick=showTrash;$('#addPersonBtn').onclick=addPerson;$('#createAlbumBtn').onclick=createAlbum;$('#createCapsuleBtn').onclick=createCapsule;$('#notificationBtn').onclick=()=>go('notifications');$('#markReadBtn').onclick=async()=>{await api('/api/archive/notifications/read',{method:'POST'});await loadAll()};$('#syncBtn').onclick=syncOffline;$('#textSizeBtn').onclick=()=>{const large=document.documentElement.style.getPropertyValue('--text-scale')==='1.12';document.documentElement.style.setProperty('--text-scale',large?'1':'1.12');localStorage.setItem('mw_text_scale',large?'1':'1.12')};$('#contrastBtn').onclick=()=>{document.body.classList.toggle('contrast');localStorage.setItem('mw_contrast',document.body.classList.contains('contrast')?'1':'0')};$('#deleteAccountBtn').onclick=deleteAccount;$('#logoutBtn').onclick=async()=>{await api('/api/logout',{method:'POST'});location.href='/login'};$('#inviteBtn').onclick=async()=>{const r=await api('/api/family/invite',{method:'POST'});const link=location.origin+r.url;try{await navigator.clipboard.writeText(link);toast('Private invite link copied')}catch{prompt('Share this private invite link:',link)}};
+    $$('.template').forEach(b=>b.onclick=()=>{$$('.template').forEach(x=>x.classList.remove('active'));b.classList.add('active');state.interviewTopic=b.dataset.topic;$('#interviewInput').value='';toast('Starting point selected')});$('#sendInterviewBtn').onclick=interviewSend;$('#interviewInput').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();interviewSend()}};$('#finishInterviewBtn').onclick=finishInterview;$('#interviewCollaborator').onchange=async e=>{if(!state.interviewId)return toast('Begin the interview first');if(!e.target.value)return;await api(`/api/archive/interviews/${state.interviewId}/participants`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:Number(e.target.value)})});toast('Relative invited to this interview')};$('#acceptTranscriptBtn').onclick=()=>{const text=$('#reviewText').value.trim();if(state.recordTarget==='story'){$('#storyContent').value=[$('#storyContent').value.trim(),text].filter(Boolean).join('\n\n');state.pendingTranscript=text}else{$('#interviewInput').value=text}$('#transcriptReview').classList.add('hidden');toast('Transcript added for review')};$('#discardTranscriptBtn').onclick=()=>{$('#transcriptReview').classList.add('hidden');state.pendingAudio=null;state.pendingTranscript=''};
+    $('#mobileComposerBtn').onclick=openComposer;
+    setupRecorder($('#storyMicBtn'),$('#storyMicStatus'),text=>showTranscriptReview(text,'story'),blob=>state.pendingAudio=blob);setupRecorder($('#interviewMicBtn'),$('#interviewMicStatus'),text=>showTranscriptReview(text,'interview'),()=>{});
+    $('#storyAudio').addEventListener('change',async()=>{const file=$('#storyAudio').files[0];if(!file)return;$('#storyMicStatus').textContent='Transcribing attachment for review...';try{const form=new FormData();form.append('audio',file);const result=await api('/api/transcribe',{method:'POST',body:form});showTranscriptReview(result.text||'','story');$('#storyMicStatus').textContent='Review the transcript before saving.'}catch(e){$('#storyMicStatus').textContent=e.message}});
+    document.addEventListener('click',e=>{const closer=e.target.closest('[data-close]');if(closer)closeModal(closer.dataset.close)});
+    window.addEventListener('online',syncOffline);window.addEventListener('offline',updateOfflineStatus);if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});if(localStorage.getItem('mw_text_scale'))document.documentElement.style.setProperty('--text-scale',localStorage.getItem('mw_text_scale'));if(localStorage.getItem('mw_contrast')==='1')document.body.classList.add('contrast');updateOfflineStatus();go((location.hash||'#home').slice(1));loadAll().catch(e=>{toast(navigator.onLine?e.message:'Offline capture is ready. New memories will sync later.');if(navigator.onLine)setTimeout(()=>location.href='/login',1200)});
   </script>
 </body>
 </html>
