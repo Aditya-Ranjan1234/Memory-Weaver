@@ -298,6 +298,12 @@ class MemoryWeaverTests(unittest.TestCase):
                 inviter.get("/api/dashboard").json()["counts"]["family"], 1
             )
 
+            app_html = relative.get("/app").text
+            self.assertIn("acceptPendingFamilyInvite", app_html)
+            self.assertIn("sessionStorage.getItem('mw_family_invite')", app_html)
+            self.assertIn("api('/api/family/accept'", app_html)
+            self.assertIn("Family invitation accepted", app_html)
+
     def test_private_story_image_upload_and_validation(self) -> None:
         created = self.client.post(
             "/api/stories/with-image",
