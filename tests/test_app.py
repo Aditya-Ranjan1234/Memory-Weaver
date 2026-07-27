@@ -40,8 +40,10 @@ class FakeOpenAI:
             )
         )
         self.response_number = 0
+        self.calls: list[dict[str, object]] = []
 
-    def _respond(self, **_: object) -> SimpleNamespace:
+    def _respond(self, **kwargs: object) -> SimpleNamespace:
+        self.calls.append(kwargs)
         self.response_number += 1
         if self.response_number == 1:
             text = "When you picture that school morning, who was walking beside you?"
@@ -52,6 +54,19 @@ class FakeOpenAI:
                 '{"title":"My First School Morning","content":"I walked to school with my '
                 'grandmother.","tags":["school","grandmother"],"year":null}'
             )
+        return SimpleNamespace(output_text=text)
+
+
+class RetryingInterviewOpenAI(FakeOpenAI):
+    def _respond(self, **kwargs: object) -> SimpleNamespace:
+        self.calls.append(kwargs)
+        self.response_number += 1
+        text = (
+            "Thank you for sharing. I'd love to hear more about this meaningful memory. "
+            "Who was there? What happened next?"
+            if self.response_number == 1
+            else "When you picture that courtyard, what is the first small detail you notice?"
+        )
         return SimpleNamespace(output_text=text)
 
 
@@ -790,6 +805,14 @@ class MemoryWeaverTests(unittest.TestCase):
             json={"message": "My grandmother walked with me."},
         )
         self.assertEqual(continued.status_code, 200)
+        follow_up_input = fake.calls[1]["input"]
+        self.assertEqual(
+            [message["role"] for message in follow_up_input],
+            ["assistant", "user"],
+        )
+        self.assertEqual(
+            follow_up_input[-1]["content"], "My grandmother walked with me."
+        )
 
         finalized = self.client.post(
             f"/api/interviews/{interview_id}/finalize",
@@ -797,6 +820,25 @@ class MemoryWeaverTests(unittest.TestCase):
         )
         self.assertEqual(finalized.status_code, 200)
         self.assertEqual(finalized.json()["story"]["title"], "My First School Morning")
+
+    @patch("memory_weaver.app.get_openai_client")
+    def test_interview_retries_generic_or_multi_question_reply(
+        self, openai_client
+    ) -> None:
+        fake = RetryingInterviewOpenAI()
+        openai_client.return_value = fake
+
+        started = self.client.post(
+            "/api/interviews",
+            headers=self.csrf_headers,
+            json={"topic": "summer afternoons in the courtyard"},
+        )
+
+        self.assertEqual(started.status_code, 200)
+        self.assertEqual(len(fake.calls), 2)
+        self.assertEqual(started.json()["reply"].count("?"), 1)
+        self.assertNotIn("thank you for sharing", started.json()["reply"].lower())
+        self.assertIn("previous draft was rejected", fake.calls[1]["instructions"])
 
 
 if __name__ == "__main__":

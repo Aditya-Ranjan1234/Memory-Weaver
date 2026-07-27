@@ -7,6 +7,7 @@ import json
 import os
 import secrets
 import time
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import urlparse
@@ -114,6 +115,61 @@ Conversation rules:
 
 Return only your conversational reply, with no labels or markdown headings.
 """.strip()
+
+INTERVIEW_BANNED_PHRASES = (
+    "i'm looking forward",
+    "thank you for sharing",
+    "that sounds wonderful",
+    "i'd love to hear more",
+    "meaningful or significant",
+)
+
+
+def interview_reply_issues(reply: str, previous_replies: list[str]) -> list[str]:
+    """Return measurable style problems that make an interview reply feel generic."""
+    clean = reply.strip()
+    lower = clean.lower()
+    issues: list[str] = []
+    if not clean:
+        return ["the reply is empty"]
+    if len(clean.split()) > 50:
+        issues.append("it exceeds 50 words")
+    if clean.count("?") != 1:
+        issues.append("it must contain exactly one question")
+    if any(phrase in lower for phrase in INTERVIEW_BANNED_PHRASES):
+        issues.append("it uses generic interview language")
+    for previous in previous_replies[-6:]:
+        similarity = SequenceMatcher(None, lower, previous.strip().lower()).ratio()
+        if similarity >= 0.82:
+            issues.append("it repeats an earlier question")
+            break
+    return issues
+
+
+def generate_interview_reply(
+    model_input: str | list[dict[str, str]], previous_replies: list[str]
+) -> str:
+    """Generate and validate a natural follow-up, retrying one weak draft."""
+    client = get_openai_client()
+    correction = ""
+    for _ in range(2):
+        response = client.responses.create(
+            model=INTERVIEW_MODEL,
+            instructions=INTERVIEWER_INSTRUCTIONS + correction,
+            input=model_input,
+            max_output_tokens=220,
+        )
+        reply = response.output_text.strip()
+        issues = interview_reply_issues(reply, previous_replies)
+        if not issues:
+            return reply
+        correction = (
+            "\n\nYour previous draft was rejected because "
+            + "; ".join(issues)
+            + ". Write a fresh follow-up grounded in a concrete detail from the storyteller. "
+            "Return only one natural question, optionally preceded by a brief acknowledgment."
+        )
+    raise ValueError("The model did not produce a usable interview question")
 
 
 def detect_image_mime(content: bytes) -> str | None:
@@ -938,13 +994,7 @@ def start_interview(
         else "Begin immediately with one relaxed question that helps the person choose a specific moment to revisit. Do not greet them, praise them, or say you are looking forward to their stories."
     )
     try:
-        response = get_openai_client().responses.create(
-            model=INTERVIEW_MODEL,
-            instructions=INTERVIEWER_INSTRUCTIONS,
-            input=start_prompt,
-            max_output_tokens=220,
-        )
-        reply = response.output_text.strip()
+        reply = generate_interview_reply(start_prompt, [])
     except Exception:
         raise HTTPException(
             status_code=502,
@@ -1003,13 +1053,10 @@ def continue_interview(
     history.append({"role": "user", "content": message})
 
     try:
-        response = get_openai_client().responses.create(
-            model=INTERVIEW_MODEL,
-            instructions=INTERVIEWER_INSTRUCTIONS,
-            input=history,
-            max_output_tokens=260,
+        reply = generate_interview_reply(
+            history,
+            [item["content"] for item in history if item["role"] == "assistant"],
         )
-        reply = response.output_text.strip()
     except Exception:
         raise HTTPException(
             status_code=502,
